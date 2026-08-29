@@ -1,0 +1,60 @@
+# Credentials and local configuration
+.env
+configs/project.yaml
+*.pem
+*.key
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Notebook and editor state
+.ipynb_checkpoints/
+.jupyter/
+.vscode/
+.idea/
+*~
+.DS_Store
+Thumbs.db
+
+# Data and generated products (directory placeholders remain tracked)
+data/raw/**
+data/external/**
+data/interim/**
+data/processed/**
+outputs/figures/**
+outputs/maps/**
+outputs/reports/**
+outputs/tables/**
+web/data/**
+!**/.gitkeep
+
+# Common large geospatial artifacts outside the standard data directories
+*.tif
+*.tiff
+*.jp2
+*.img
+*.vrt
+*.mbtiles
+*.pmtiles
+*.gpkg
+*.parquet
+*.geoparquet
+*.h5
+*.hdf5
+*.nc
+*.zip
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
