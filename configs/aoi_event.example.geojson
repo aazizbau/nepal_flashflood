@@ -1,0 +1,18 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Example Nepal–Tibet search area; replace with verified event AOI"
+  },
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [84.9, 28.0],
+        [86.0, 28.0],
+        [86.0, 29.1],
+        [84.9, 29.1],
+        [84.9, 28.0]
+      ]
+    ]
+  }
+}
