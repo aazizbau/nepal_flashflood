@@ -11,7 +11,7 @@ reproducible workflow for the Nepal–Tibet flash-flood project. It:
 3. filters by cloud cover, downloadable permissions, and the requested asset;
 4. saves the search result metadata before any imagery order is submitted;
 5. optionally submits a clipped, partial Planet Orders API order;
-6. waits for and downloads the order; and
+6. waits with retry-safe polling and downloads the order; and
 7. aligns the downloaded rasters to one grid and calculates a block-wise,
    per-band, per-pixel median GeoTIFF.
 
@@ -74,6 +74,15 @@ Create only a local median from an already downloaded order directory:
       --from-download data/raw/planet/pre_event/order `
       --output data/raw/planet/pre_event
 
+Resume an order after a timeout or interrupted terminal (this never creates a
+new order):
+
+    python scripts/download_planet_median.py `
+      --aoi configs/aoi_event.geojson `
+      --start 2026-08-01 --end 2026-08-25 `
+      --output data/raw/planet/pre_event `
+      --resume-order YOUR_ORDER_ID
+
 Equivalent Bash commands use ``\`` for line continuation. Run ``--help`` for
 all options. The script writes ``search_results.geojson``, ``run.json``, the
 downloaded order tree, ``median_composite.tif``, and
@@ -87,6 +96,7 @@ import json
 import logging
 import math
 import sys
+import time as clock
 import warnings
 from contextlib import ExitStack
 from datetime import date, datetime, time, timezone
@@ -95,6 +105,7 @@ from typing import Any, Iterable
 
 import numpy as np
 import rasterio
+import httpx
 from dotenv import load_dotenv
 from planet import Planet, data_filter, order_request
 from pyproj import CRS, Transformer
@@ -153,6 +164,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Skip API search/order and composite GeoTIFFs already below this directory",
     )
     parser.add_argument(
+        "--resume-order",
+        help="Resume polling/downloading an existing Planet order ID; never creates a new order",
+    )
+    parser.add_argument("--poll-seconds", type=float, default=15.0, help="Seconds between order status checks")
+    parser.add_argument("--wait-hours", type=float, default=6.0, help="Maximum time to wait for an order")
+    parser.add_argument(
         "--submit",
         action="store_true",
         help="Actually submit and download an order; without this, only search metadata is saved",
@@ -166,10 +183,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--max-cloud must be between 0 and 100")
     if args.limit < 1 or args.limit > 500:
         parser.error("--limit must be between 1 and the Orders API limit of 500")
-    if args.resolution <= 0 or args.block_size <= 0 or args.max_pixels <= 0:
-        parser.error("--resolution, --block-size, and --max-pixels must be positive")
-    if args.from_download and args.submit:
-        parser.error("--from-download and --submit are mutually exclusive")
+    if any(value <= 0 for value in (args.resolution, args.block_size, args.max_pixels, args.poll_seconds, args.wait_hours)):
+        parser.error("resolution, block size, pixel limit, polling interval, and wait time must be positive")
+    selected_modes = sum(bool(value) for value in (args.from_download, args.resume_order, args.submit))
+    if selected_modes > 1:
+        parser.error("--from-download, --resume-order, and --submit are mutually exclusive")
     return args
 
 
@@ -268,9 +286,49 @@ def create_and_download_order(
     created = pl.orders.create_order(request)
     order_id = created["id"]
     LOGGER.info("Created order %s", order_id)
-    state = pl.orders.wait(order_id, delay=10, max_attempts=720, callback=LOGGER.info)
-    if state not in {"success", "partial"}:
-        raise RuntimeError(f"Planet order {order_id} ended in state {state!r}")
+    state, _ = wait_for_order(pl, order_id, args.poll_seconds, args.wait_hours)
+    download_order(pl, order_id, download_dir, args.overwrite)
+    return order_id, state
+
+
+def wait_for_order(
+    pl: Planet, order_id: str, poll_seconds: float, wait_hours: float
+) -> tuple[str, dict[str, Any]]:
+    """Poll an order while tolerating temporary connection/read timeouts."""
+    terminal_states = {"success", "partial", "failed", "cancelled"}
+    deadline = clock.monotonic() + wait_hours * 3600
+    consecutive_errors = 0
+    last_state: str | None = None
+    while clock.monotonic() < deadline:
+        try:
+            order = pl.orders.get_order(order_id)
+            state = str(order.get("state", "unknown"))
+            consecutive_errors = 0
+            if state != last_state:
+                LOGGER.info("Order %s: %s", order_id, state)
+                last_state = state
+            if state in terminal_states:
+                if state not in {"success", "partial"}:
+                    hints = order.get("error_hints") or order.get("last_message") or "no details supplied"
+                    raise RuntimeError(f"Planet order {order_id} ended in state {state!r}: {hints}")
+                return state, order
+        except httpx.TransportError as exc:
+            consecutive_errors += 1
+            LOGGER.warning(
+                "Temporary Planet connection error (%s/12): %s; polling will continue",
+                consecutive_errors,
+                exc or type(exc).__name__,
+            )
+            if consecutive_errors >= 12:
+                raise RuntimeError("Too many consecutive Planet connection errors") from exc
+        clock.sleep(poll_seconds)
+    raise TimeoutError(f"Order {order_id} did not finish within {wait_hours:g} hour(s)")
+
+
+def download_order(
+    pl: Planet, order_id: str, download_dir: Path, overwrite: bool
+) -> None:
+    """Download a completed order into the local order directory."""
     download_dir.mkdir(parents=True, exist_ok=True)
     pl.orders.download_order(
         order_id,
@@ -278,7 +336,16 @@ def create_and_download_order(
         overwrite=args.overwrite,
         progress_bar=True,
     )
-    return order_id, state
+
+
+def order_scene_ids(order: dict[str, Any]) -> list[str]:
+    """Extract scene IDs from the products recorded in an Orders API response."""
+    ids: list[str] = []
+    for product in order.get("products", []):
+        ids.extend(str(item_id) for item_id in product.get("item_ids", []))
+    if not ids:
+        raise ValueError("The order response contains no product item IDs")
+    return list(dict.fromkeys(ids))
 
 
 def choose_target_crs(aoi: dict[str, Any], requested: str | None) -> CRS:
@@ -499,6 +566,17 @@ def main(argv: list[str] | None = None) -> int:
         if not scene_ids:
             raise FileNotFoundError(f"Could not infer Planet scene IDs below {download_dir}")
         run_metadata["mode"] = "existing-download"
+    elif args.resume_order:
+        pl = Planet()
+        state, order = wait_for_order(pl, args.resume_order, args.poll_seconds, args.wait_hours)
+        scene_ids = order_scene_ids(order)
+        run_metadata.update(
+            mode="resumed-order",
+            scene_ids=scene_ids,
+            order_id=args.resume_order,
+            order_state=state,
+        )
+        download_order(pl, args.resume_order, download_dir, args.overwrite)
     else:
         pl = Planet()
         scenes = search_scenes(pl, args, aoi)
