@@ -77,6 +77,24 @@ providers you intend to use. Never commit API keys.
 Availability, licensing, spatial resolution, cloud cover, terrain effects, and
 cross-border data restrictions must be checked for each dataset.
 
+## OpenStreetMap infrastructure
+
+Download current OpenStreetMap buildings, transport features, crossings,
+utilities, water infrastructure, and public services for the configured AOI:
+
+```powershell
+python scripts/download_osm_infrastructure.py `
+  --aoi configs/aoi_event.example.geojson `
+  --output data/external/osm
+```
+
+The command creates a categorized GeoPackage plus CSV and JSON provenance
+summaries. OpenStreetMap coverage is community-contributed and may be incomplete,
+especially in remote high-mountain areas, so critical assets must be independently
+validated. Any map, report, database, or derivative using these data must retain
+the attribution **© OpenStreetMap contributors** and comply with the
+[Open Database License](https://www.openstreetmap.org/copyright).
+
 ## Suggested notebook sequence
 
 1. `01_event_context.ipynb` — sources, timeline, AOI, and hypotheses

@@ -73,6 +73,7 @@ seams before using a median composite for change or damage analysis.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import logging
 import math
@@ -81,6 +82,35 @@ import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
+
+
+def configure_bundled_gdal_resources() -> None:
+    """Prevent incompatible system PostGIS paths from overriding Rasterio.
+
+    Windows installations of PostgreSQL/PostGIS commonly define global
+    ``PROJ_LIB`` and ``GDAL_DATA`` variables. Those resources can be older than
+    the GDAL/PROJ libraries bundled with the active Rasterio wheel, producing
+    ``Cannot find proj.db`` or database-layout mismatch warnings. Resolve the
+    installed Rasterio package without importing it, then select its matching
+    resource directories before GDAL is loaded.
+    """
+    spec = importlib.util.find_spec("rasterio")
+    if spec is None or not spec.submodule_search_locations:
+        return
+    package_dir = Path(next(iter(spec.submodule_search_locations)))
+    proj_data = package_dir / "proj_data"
+    gdal_data = package_dir / "gdal_data"
+    if (proj_data / "proj.db").is_file():
+        os.environ["PROJ_DATA"] = str(proj_data)
+        # PROJ_LIB is retained for compatibility with software that has not
+        # migrated to the newer PROJ_DATA variable name.
+        os.environ["PROJ_LIB"] = str(proj_data)
+    if gdal_data.is_dir():
+        os.environ["GDAL_DATA"] = str(gdal_data)
+    os.environ.setdefault("GTIFF_SRS_SOURCE", "EPSG")
+
+
+configure_bundled_gdal_resources()
 
 import ee
 import rasterio
@@ -451,4 +481,3 @@ if __name__ == "__main__":
     except Exception as exc:
         LOGGER.error("%s: %s", type(exc).__name__, exc)
         sys.exit(1)
-
