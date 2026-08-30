@@ -10,7 +10,8 @@ reproducible workflow for the Nepal–Tibet flash-flood project. It:
 2. searches ``PSScene`` imagery acquired within an inclusive UTC date range;
 3. filters by cloud cover, downloadable permissions, and the requested asset;
 4. saves the search result metadata before any imagery order is submitted;
-5. optionally submits a clipped, partial Planet Orders API order;
+5. optionally submits a clipped, partial Planet order that extracts only Red,
+   Green, and Blue from the eight-band surface-reflectance input;
 6. waits with retry-safe polling and downloads the order; and
 7. aligns the downloaded rasters to one grid and calculates a block-wise,
    per-band, per-pixel median GeoTIFF.
@@ -19,8 +20,11 @@ Important behavior
 ------------------
 * Running without ``--submit`` is a safe search/preview: no order is placed.
 * ``--submit`` can consume Planet quota, processing units, and data egress.
-* The default bundle is eight-band orthorectified surface reflectance plus
-  UDM2 (``analytic_8b_sr_udm2``). Your Planet plan must include access.
+* The default source bundle is eight-band orthorectified surface reflectance
+  plus UDM2 (``analytic_8b_sr_udm2``). Planet's band-math tool delivers only
+  Red, Green, and Blue imagery bands, in that order; UDM2 remains available
+  for quality masking. Your Planet plan must include access to this bundle and
+  processing tool.
 * The UDM2 ``clear`` band (band 1) is used by default. Cloud, haze, shadow,
   snow, and unusable pixels therefore do not contribute to the median.
 * Planet's Orders API ``composite`` tool is not used because it overlays
@@ -30,8 +34,8 @@ Important behavior
 * A median is not a substitute for image co-registration or manual QA. Inspect
   footprints, acquisition times, residual cloud, snow, terrain shadow, seams,
   and radiometry before damage analysis.
-* The embedded example AOI is intentionally broad. It can entail substantial
-  quota and storage use at 3 m. Prefer a small, verified flood-corridor AOI.
+* The embedded AOI uses ``bbox = [85.08, 27.88, 85.62, 28.40]``. Confirm that
+  it represents the intended flood corridor before placing an order.
 
 Authentication
 --------------
@@ -45,9 +49,9 @@ AOI formats
 containing exactly one feature. Coordinates must be longitude/latitude WGS84
 (EPSG:4326). If ``--aoi`` is omitted, this example polygon is used:
 
-    84.9,28.0 ───────── 86.0,28.0
-         │                    │
-    84.9,29.1 ───────── 86.0,29.1
+    85.08,28.40 ─────── 85.62,28.40
+          │                    │
+    85.08,27.88 ─────── 85.62,27.88
 
 Example commands (PowerShell)
 -----------------------------
@@ -118,15 +122,19 @@ from shapely.ops import transform as shapely_transform
 
 LOGGER = logging.getLogger("planet-median")
 
+DEFAULT_BBOX = (85.08, 27.88, 85.62, 28.40)  # xmin, ymin, xmax, ymax
+RGB_BAND_NAMES = ("red", "green", "blue")
+RGB_8B_EXPRESSIONS = {"b1": "b6", "b2": "b4", "b3": "b2"}
+xmin, ymin, xmax, ymax = DEFAULT_BBOX
 DEFAULT_AOI: dict[str, Any] = {
     "type": "Polygon",
     "coordinates": [
         [
-            [84.9, 28.0],
-            [86.0, 28.0],
-            [86.0, 29.1],
-            [84.9, 29.1],
-            [84.9, 28.0],
+            [xmin, ymin],
+            [xmax, ymin],
+            [xmax, ymax],
+            [xmin, ymax],
+            [xmin, ymin],
         ]
     ],
 }
@@ -281,7 +289,10 @@ def create_and_download_order(
         name=name,
         products=[product],
         order_type="partial",
-        tools=[order_request.clip_tool(aoi)],
+        tools=[
+            order_request.clip_tool(aoi),
+            order_request.band_math_tool(**RGB_8B_EXPRESSIONS, pixel_type="16U"),
+        ],
     )
     created = pl.orders.create_order(request)
     order_id = created["id"]
@@ -333,7 +344,7 @@ def download_order(
     pl.orders.download_order(
         order_id,
         directory=download_dir,
-        overwrite=args.overwrite,
+        overwrite=overwrite,
         progress_bar=True,
     )
 
@@ -443,9 +454,22 @@ def build_median_composite(
 
     with ExitStack() as stack:
         sources = [stack.enter_context(rasterio.open(image)) for _, image, _ in pairs]
-        band_count = sources[0].count
-        if any(source.count != band_count for source in sources):
+        source_band_count = sources[0].count
+        if any(source.count != source_band_count for source in sources):
             raise ValueError("Downloaded imagery has inconsistent band counts")
+        if source_band_count == 3:
+            # New RGB-only orders: band-math output is already Red, Green, Blue.
+            source_bands = (1, 2, 3)
+        elif source_band_count == 8:
+            # Backward compatibility for older downloads of the full 8-band
+            # source bundle: Red=b6, Green=b4, Blue=b2.
+            source_bands = (6, 4, 2)
+            LOGGER.info("Selecting RGB bands 6, 4, and 2 from legacy eight-band downloads")
+        else:
+            raise ValueError(
+                f"Expected a 3-band RGB derivative or 8-band PlanetScope source; "
+                f"found {source_band_count} bands"
+            )
         image_vrts = [
             stack.enter_context(
                 WarpedVRT(
@@ -491,7 +515,7 @@ def build_median_composite(
         profile.update(
             driver="GTiff",
             dtype="float32",
-            count=band_count,
+            count=3,
             crs=target_crs,
             transform=transform,
             width=width,
@@ -511,16 +535,19 @@ def build_median_composite(
         with rasterio.open(output_path, "w", **profile) as destination, rasterio.open(
             count_path, "w", **count_profile
         ) as count_destination:
+            for output_band, name in enumerate(RGB_BAND_NAMES, start=1):
+                destination.set_band_description(output_band, name)
+            count_destination.set_band_description(1, "valid_rgb_observation_count")
             for window in windows(width, height, block_size):
                 clear_masks: list[np.ndarray | None] = []
                 for udm_vrt in udm_vrts:
                     clear_masks.append(None if udm_vrt is None else udm_vrt.read(1, window=window) == 1)
 
                 observation_count: np.ndarray | None = None
-                for band in range(1, band_count + 1):
+                for output_band, source_band in enumerate(source_bands, start=1):
                     observations = []
                     for image_vrt, clear in zip(image_vrts, clear_masks, strict=True):
-                        array = image_vrt.read(band, window=window, masked=True).filled(np.nan).astype("float32")
+                        array = image_vrt.read(source_band, window=window, masked=True).filled(np.nan).astype("float32")
                         if clear is not None:
                             array[~clear] = np.nan
                         observations.append(array)
@@ -531,7 +558,7 @@ def build_median_composite(
                         warnings.filterwarnings("ignore", message="All-NaN slice encountered")
                         median = np.nanmedian(stack_array, axis=0).astype("float32")
                     median[~np.isfinite(median)] = -9999.0
-                    destination.write(median, band, window=window)
+                    destination.write(median, output_band, window=window)
                 assert observation_count is not None
                 count_destination.write(observation_count, 1, window=window)
 
@@ -556,6 +583,8 @@ def main(argv: list[str] | None = None) -> int:
         "item_type": args.item_type,
         "asset_type": args.asset_type,
         "product_bundle": args.product_bundle,
+        "output_bands": list(RGB_BAND_NAMES),
+        "planet_8b_rgb_mapping": RGB_8B_EXPRESSIONS,
         "max_cloud_percent": args.max_cloud,
         "resolution_m": args.resolution,
     }
