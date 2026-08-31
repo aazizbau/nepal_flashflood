@@ -210,8 +210,10 @@ def write_html(
 <title>__TITLE__</title><style>
 *{box-sizing:border-box}html,body,#viewer{height:100%;margin:0}
 body{font-family:system-ui,sans-serif;background:#182028;overflow:hidden}
-#viewer{position:relative;background:linear-gradient(135deg,#25313b,#12181e)}
-.layer{position:absolute;inset:0;overflow:hidden}.layer img{position:absolute;display:block}
+#viewer{position:relative;background:linear-gradient(135deg,#25313b,#12181e);touch-action:none}
+.layer{position:absolute;inset:0;overflow:hidden}.scene{position:absolute;inset:0;
+transform-origin:0 0;will-change:transform}.layer img{position:absolute;display:block;
+user-select:none;-webkit-user-drag:none}
 #post-layer{clip-path:inset(0 50% 0 0)}
 .title{position:absolute;z-index:5;top:12px;left:50%;transform:translateX(-50%);
 background:#fffffff0;padding:8px 14px;border-radius:6px;box-shadow:0 1px 5px #0006;
@@ -224,14 +226,19 @@ background:#fff;box-shadow:0 0 5px #000;pointer-events:none}
 #divider::after{content:'↔';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
 width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#fff;
 color:#222;font-size:22px;box-shadow:0 1px 7px #0008}
-#slider{position:absolute;z-index:6;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize}
 .hint{position:absolute;z-index:5;right:12px;top:12px;background:#111b;color:#fff;
 padding:6px 9px;border-radius:4px;font-size:12px;pointer-events:none}
+.controls{position:absolute;z-index:7;left:12px;top:12px;display:flex;flex-direction:column;
+box-shadow:0 1px 5px #0007}.controls button{width:36px;height:36px;border:0;border-bottom:1px solid #bbb;
+background:#fff;color:#222;font:bold 20px system-ui;cursor:pointer}.controls button:last-child{border:0;
+font-size:13px}.controls button:hover{background:#eee}
 </style></head><body><div id="viewer">
-<div id="pre-layer" class="layer"></div><div id="post-layer" class="layer"></div>
+<div id="pre-layer" class="layer"><div class="scene"></div></div>
+<div id="post-layer" class="layer"><div class="scene"></div></div>
 <div id="divider"></div>
-<input id="slider" type="range" min="0" max="100" value="50" aria-label="Before and after position">
-<div class="title"></div><div class="hint">Drag left or right</div>
+<div class="controls"><button id="zoom-in" title="Zoom in">+</button>
+<button id="zoom-out" title="Zoom out">−</button><button id="reset" title="Reset view">1:1</button></div>
+<div class="title"></div><div class="hint">Wheel: zoom · Drag: pan · Drag divider: compare</div>
 <div class="labels"><span id="pre-label"></span><span id="post-label"></span></div>
 </div><script>
 const cfg=__CONFIG__;
@@ -246,15 +253,27 @@ function addRaster(layerId,src,bounds){
   img.style.top=((north-bounds[1][0])/(north-south)*100)+'%';
   img.style.width=((bounds[1][1]-bounds[0][1])/(east-west)*100)+'%';
   img.style.height=((bounds[1][0]-bounds[0][0])/(north-south)*100)+'%';
-  document.getElementById(layerId).appendChild(img);
+  document.querySelector(`#${layerId} .scene`).appendChild(img);
 }
 addRaster('pre-layer','pre_event.png',cfg.preBounds);
 addRaster('post-layer','post_event.png',cfg.postBounds);
-const slider=document.getElementById('slider'),post=document.getElementById('post-layer');
-const divider=document.getElementById('divider');
-function update(){const value=slider.value;post.style.clipPath=`inset(0 ${100-value}% 0 0)`;
-divider.style.left=value+'%'}
-slider.addEventListener('input',update);update();
+const viewer=document.getElementById('viewer'),post=document.getElementById('post-layer');
+const divider=document.getElementById('divider'),scenes=document.querySelectorAll('.scene');
+let split=.5,scale=1,tx=0,ty=0,mode=null,lastX=0,lastY=0;
+function render(){post.style.clipPath=`inset(0 ${(1-split)*100}% 0 0)`;
+divider.style.left=(split*100)+'%';scenes.forEach(s=>s.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`)}
+function zoomAt(factor,x=viewer.clientWidth/2,y=viewer.clientHeight/2){const next=Math.max(1,Math.min(12,scale*factor));
+const ratio=next/scale;tx=x-(x-tx)*ratio;ty=y-(y-ty)*ratio;scale=next;if(scale===1){tx=0;ty=0}render()}
+viewer.addEventListener('wheel',e=>{e.preventDefault();const r=viewer.getBoundingClientRect();
+zoomAt(e.deltaY<0?1.25:.8,e.clientX-r.left,e.clientY-r.top)},{passive:false});
+viewer.addEventListener('pointerdown',e=>{if(e.target.closest('.controls'))return;viewer.setPointerCapture(e.pointerId);
+const r=viewer.getBoundingClientRect();mode=Math.abs(e.clientX-r.left-split*r.width)<30?'split':'pan';lastX=e.clientX;lastY=e.clientY});
+viewer.addEventListener('pointermove',e=>{if(!mode)return;const r=viewer.getBoundingClientRect();
+if(mode==='split')split=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));else{tx+=e.clientX-lastX;ty+=e.clientY-lastY}
+lastX=e.clientX;lastY=e.clientY;render()});
+viewer.addEventListener('pointerup',()=>mode=null);viewer.addEventListener('pointercancel',()=>mode=null);
+document.getElementById('zoom-in').onclick=()=>zoomAt(1.5);document.getElementById('zoom-out').onclick=()=>zoomAt(2/3);
+document.getElementById('reset').onclick=()=>{scale=1;tx=0;ty=0;render()};render();
 </script></body></html>"""
     document = document.replace("__TITLE__", html.escape(title)).replace("__CONFIG__", config)
     destination.write_text(document, encoding="utf-8")
