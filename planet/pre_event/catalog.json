@@ -1,0 +1,38 @@
+{
+  "type": "Catalog",
+  "stac_version": "1.0.0",
+  "id": "pre-event",
+  "title": "Pre-event baseline imagery",
+  "description": "Planet baseline imagery acquired before the event, for before/after comparison, grouped by acquisition date.",
+  "links": [
+    {
+      "rel": "root",
+      "href": "../catalog.json",
+      "type": "application/json",
+      "title": "Planet Crisis Response — Bhote Koshi–Trishuli Outburst Flood, Nepal (2026)"
+    },
+    {
+      "rel": "parent",
+      "href": "../catalog.json",
+      "type": "application/json",
+      "title": "Planet Crisis Response — Bhote Koshi–Trishuli Outburst Flood, Nepal (2026)"
+    },
+    {
+      "rel": "self",
+      "href": "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/pre-event/catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "href": "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/pre-event/items.parquet",
+      "type": "application/vnd.apache.parquet",
+      "title": "STAC-GeoParquet item index"
+    },
+    {
+      "rel": "child",
+      "href": "./planetscope-2026-05-27/collection.json",
+      "type": "application/json",
+      "title": "Trishuli–Bhote Koshi corridor baseline — Pre-event Imagery"
+    }
+  ]
+}

@@ -66,13 +66,17 @@ import csv
 import json
 import logging
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import geopandas as gpd
 import osmnx as ox
-from osmnx._errors import InsufficientResponseError
+import pandas as pd
+import pyogrio
+import requests
+from osmnx._errors import InsufficientResponseError, ResponseStatusCodeError
 from shapely.geometry import box, mapping, shape
 
 LOGGER = logging.getLogger("osm-infrastructure")
@@ -152,12 +156,21 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--output", type=Path, default=Path("data/external/osm"))
     parser.add_argument("--filename", default="osm_infrastructure.gpkg")
     parser.add_argument("--timeout", type=int, default=300, help="Overpass request timeout in seconds")
+    parser.add_argument("--retries", type=int, default=3, help="Attempts per category after transient failures")
+    parser.add_argument("--retry-delay", type=float, default=15.0, help="Initial retry delay in seconds")
     parser.add_argument("--no-clip", action="store_true", help="Keep complete geometries extending beyond AOI")
     parser.add_argument("--overwrite", action="store_true")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Keep the existing GeoPackage and skip layers already completed",
+    )
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
-    if args.timeout <= 0:
-        parser.error("--timeout must be positive")
+    if args.timeout <= 0 or args.retries <= 0 or args.retry_delay < 0:
+        parser.error("--timeout and --retries must be positive; --retry-delay cannot be negative")
+    if args.overwrite and args.resume:
+        parser.error("--overwrite and --resume are mutually exclusive")
     if Path(args.filename).name != args.filename or not args.filename.lower().endswith(".gpkg"):
         parser.error("--filename must be a .gpkg filename without directory components")
     return args
@@ -188,11 +201,38 @@ def load_aoi(path: Path | None) -> dict[str, Any]:
     return mapping(geometry)
 
 
-def json_text(value: Any) -> Any:
-    """Convert container-valued OSM tags into GeoPackage-safe JSON strings."""
+def osm_text(value: Any) -> str | None:
+    """Convert heterogeneous OSM tag values into GeoPackage-safe text."""
     if isinstance(value, (list, tuple, set, dict)):
         return json.dumps(value, ensure_ascii=False, sort_keys=isinstance(value, dict))
-    return value
+    if value is None or (not isinstance(value, str) and bool(pd.isna(value))):
+        return None
+    return str(value)
+
+
+def geopackage_field_names(columns: list[str], geometry_name: str) -> dict[str, str]:
+    """Return collision-free field names for SQLite/GeoPackage.
+
+    OSM tag keys are case-sensitive, but SQLite identifiers are not. Thus OSM
+    columns such as ``FIXME`` and ``fixme`` cannot coexist unchanged in a
+    GeoPackage layer. Suffix later collisions deterministically and avoid
+    SQLite's conventional feature-ID field name.
+    """
+    used = {geometry_name.casefold()}
+    renames: dict[str, str] = {}
+    for original in columns:
+        if original == geometry_name:
+            continue
+        base = "osm_fid" if original.casefold() == "fid" else original
+        candidate = base
+        suffix = 2
+        while candidate.casefold() in used:
+            candidate = f"{base}_{suffix}"
+            suffix += 1
+        used.add(candidate.casefold())
+        if candidate != original:
+            renames[original] = candidate
+    return renames
 
 
 def prepare_layer(gdf: gpd.GeoDataFrame, aoi: dict[str, Any], clip: bool) -> gpd.GeoDataFrame:
@@ -200,9 +240,16 @@ def prepare_layer(gdf: gpd.GeoDataFrame, aoi: dict[str, Any], clip: bool) -> gpd
     if clip:
         result = gpd.clip(result, shape(aoi), keep_geom_type=False)
         result = result.loc[~result.geometry.is_empty & result.geometry.notna()].copy()
+    renames = geopackage_field_names(list(result.columns), result.geometry.name)
+    if renames:
+        LOGGER.info("Renaming case-colliding/reserved fields for GeoPackage: %s", renames)
+        result = result.rename(columns=renames)
     for column in result.columns:
         if column != result.geometry.name and result[column].dtype == "object":
-            result[column] = result[column].map(json_text)
+            # OSM tags can contain strings, numbers, lists, or combinations in
+            # the same column. Force one nullable text schema so GDAL does not
+            # infer an incompatible field type from the first non-null value.
+            result[column] = result[column].map(osm_text).astype("string")
     return result
 
 
@@ -212,6 +259,31 @@ def write_summary(path: Path, rows: list[dict[str, Any]]) -> None:
         writer = csv.DictWriter(stream, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
+
+
+def download_category(
+    bbox: tuple[float, float, float, float],
+    tags: dict[str, bool | str | list[str]],
+    retries: int,
+    initial_delay: float,
+) -> gpd.GeoDataFrame:
+    """Query Overpass with bounded exponential retries for transient failures."""
+    for attempt in range(1, retries + 1):
+        try:
+            return ox.features_from_bbox(bbox, tags=tags)
+        except (requests.RequestException, ResponseStatusCodeError) as exc:
+            if attempt == retries:
+                raise
+            delay = initial_delay * (2 ** (attempt - 1))
+            LOGGER.warning(
+                "Transient Overpass failure (%s/%s): %s. Retrying in %.0f seconds.",
+                attempt,
+                retries,
+                exc,
+                delay,
+            )
+            time.sleep(delay)
+    raise RuntimeError("unreachable retry state")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -224,8 +296,11 @@ def main(argv: list[str] | None = None) -> int:
     bbox = tuple(shape(aoi).bounds)  # left, bottom, right, top
     args.output.mkdir(parents=True, exist_ok=True)
     geopackage = args.output / args.filename
-    if geopackage.exists() and not args.overwrite:
-        raise FileExistsError(f"{geopackage} exists; use --overwrite to replace it")
+    if geopackage.exists() and not (args.overwrite or args.resume):
+        raise FileExistsError(f"{geopackage} exists; use --resume or --overwrite")
+    if geopackage.exists() and args.overwrite:
+        geopackage.unlink()
+        LOGGER.info("Removed existing output GeoPackage before rebuilding: %s", geopackage)
 
     ox.settings.requests_timeout = args.timeout
     ox.settings.use_cache = True
@@ -234,11 +309,30 @@ def main(argv: list[str] | None = None) -> int:
 
     summaries: list[dict[str, Any]] = []
     completed_layers: list[str] = []
+    existing_layers = (
+        {str(row[0]) for row in pyogrio.list_layers(geopackage)}
+        if geopackage.exists()
+        else set()
+    )
     for category in args.categories:
+        if args.resume and category in existing_layers:
+            feature_count = int(pyogrio.read_info(geopackage, layer=category)["features"])
+            LOGGER.info("Skipping completed layer %s (%s features)", category, feature_count)
+            summaries.append(
+                {
+                    "category": category,
+                    "status": "existing",
+                    "feature_count": feature_count,
+                    "geometry_counts": "{}",
+                    "message": "Preserved by --resume",
+                }
+            )
+            completed_layers.append(category)
+            continue
         tags = CATEGORY_TAGS[category]
         LOGGER.info("Downloading %s with tags %s", category, tags)
         try:
-            raw = ox.features_from_bbox(bbox, tags=tags)
+            raw = download_category(bbox, tags, args.retries, args.retry_delay)
             layer = prepare_layer(raw, aoi, clip=not args.no_clip)
             if layer.empty:
                 raise InsufficientResponseError("query returned no features after AOI clipping")
@@ -304,4 +398,3 @@ if __name__ == "__main__":
     except Exception as exc:
         LOGGER.error("%s: %s", type(exc).__name__, exc)
         sys.exit(1)
-

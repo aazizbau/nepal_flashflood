@@ -88,12 +88,32 @@ python scripts/download_osm_infrastructure.py `
   --output data/external/osm
 ```
 
+If a public Overpass timeout interrupts a multi-layer download, preserve and
+skip completed layers on the next run with ``--resume``. Use ``--overwrite``
+only when intentionally rebuilding the entire GeoPackage.
+
 The command creates a categorized GeoPackage plus CSV and JSON provenance
 summaries. OpenStreetMap coverage is community-contributed and may be incomplete,
 especially in remote high-mountain areas, so critical assets must be independently
 validated. Any map, report, database, or derivative using these data must retain
 the attribution **© OpenStreetMap contributors** and comply with the
 [Open Database License](https://www.openstreetmap.org/copyright).
+
+## PlanetScope before/after slider map
+
+Create browser-friendly mosaics and a draggable pre/post-event comparison map
+from the downloaded PlanetScope visual products:
+
+```powershell
+python scripts/create_planet_slider_map.py
+```
+
+The default inputs are `planet/pre_event/planetscope-2026-05-27` and
+`planet/post_event/planetscope-2026-08-26`. Open
+`outputs/maps/planet_before_after/index.html` after the command finishes. The
+generated PNGs are display products; retain the original GeoTIFFs for analysis.
+The HTML uses online Leaflet libraries and an optional OpenStreetMap basemap.
+Confirm Planet's imagery license before publishing or redistributing the map.
 
 ## Suggested notebook sequence
 

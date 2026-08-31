@@ -1,0 +1,187 @@
+{
+  "type": "Collection",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/item-assets/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/eo/v1.0.0/schema.json"
+  ],
+  "id": "post-event-planetscope-2026-08-28",
+  "title": "Corridor and lower Trishuli, two days after — Post-event Imagery",
+  "description": "PlanetScope coverage acquired 04:57–05:01 UTC on 28 August 2026, two days after the flood. A four-frame strip (satellite 2544) runs south down the Bhote Koshi–Trishuli corridor from above Rasuwagadhi to Betrawati, with a fifth frame (satellite 2520) offset to the south-west, extending coverage along the lower Trishuli past Trishuli Bazaar to 27.711 N — the southernmost extent in this catalog. Cloud is 64–90% with clear fractions of 4–25%: heavy, but better than the same-day 26 August coverage, and the corridor and its river channel are legible through breaks in the upper strip. Unlike the 26 August scenes, all five are quality_category standard. Analytic products are top-of-atmosphere radiance; surface reflectance was not published for these scenes. 5 scenes; each Item carries the available visual, analytic, udm2 assets.",
+  "license": "CC-BY-NC-4.0",
+  "keywords": [
+    "disaster response",
+    "Planet",
+    "satellite imagery",
+    "flood",
+    "outburst flood",
+    "GLOF",
+    "Nepal",
+    "Bhote Koshi",
+    "Trishuli",
+    "Rasuwa",
+    "Gyirong",
+    "Tibet Autonomous Region",
+    "post-event",
+    "Nuwakot",
+    "Dhading",
+    "Betrawati",
+    "Trishuli Bazaar",
+    "damage assessment",
+    "Corridor and lower Trishuli, two days after"
+  ],
+  "providers": [
+    {
+      "name": "Planet Labs PBC",
+      "roles": [
+        "producer",
+        "processor",
+        "licensor"
+      ],
+      "url": "https://www.planet.com/"
+    },
+    {
+      "name": "Planet Crisis Response Program",
+      "roles": [
+        "host"
+      ],
+      "url": "https://www.planet.com/disasterdata/"
+    }
+  ],
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          84.91060169755904,
+          27.71068135156745,
+          85.57679596355482,
+          28.51154094977862
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2026-08-28T04:57:42.145508Z",
+          "2026-08-28T05:01:43.195327Z"
+        ]
+      ]
+    }
+  },
+  "summaries": {
+    "platform": [
+      "2520",
+      "2544"
+    ],
+    "constellation": [
+      "planetscope"
+    ]
+  },
+  "item_assets": {
+    "visual": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data",
+        "visual"
+      ],
+      "title": "Visual (true-colour RGB) ortho COG"
+    },
+    "analytic": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data",
+        "reflectance"
+      ],
+      "title": "Analytic (radiance) ortho COG"
+    },
+    "udm2": {
+      "type": "image/tiff; application=geotiff",
+      "roles": [
+        "data",
+        "cloud",
+        "cloud-shadow",
+        "snow-ice"
+      ],
+      "title": "Usable Data Mask (UDM2)"
+    }
+  },
+  "assets": {
+    "thumbnail": {
+      "href": "./thumbnail.png",
+      "type": "image/png",
+      "roles": [
+        "thumbnail"
+      ],
+      "title": "Corridor and lower Trishuli, two days after preview"
+    },
+    "geoparquet-items": {
+      "href": "./items.parquet",
+      "type": "application/vnd.apache.parquet",
+      "roles": [
+        "metadata",
+        "stac-items"
+      ],
+      "title": "STAC-GeoParquet item index (5 items)"
+    }
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "../../catalog.json",
+      "type": "application/json",
+      "title": "Planet Crisis Response — Bhote Koshi–Trishuli Outburst Flood, Nepal (2026)"
+    },
+    {
+      "rel": "parent",
+      "href": "../catalog.json",
+      "type": "application/json",
+      "title": "Post-event imagery"
+    },
+    {
+      "rel": "self",
+      "href": "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/post-event/planetscope-2026-08-28/collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "license",
+      "href": "https://creativecommons.org/licenses/by-nc/4.0/",
+      "type": "text/html",
+      "title": "CC-BY-NC-4.0"
+    },
+    {
+      "rel": "thumbnail",
+      "href": "./thumbnail.png",
+      "type": "image/png"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260828_045742_14_2544/20260828_045742_14_2544.json",
+      "type": "application/json",
+      "title": "2026-08-28T04:57:42.145508Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260828_045744_48_2544/20260828_045744_48_2544.json",
+      "type": "application/json",
+      "title": "2026-08-28T04:57:44.481921Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260828_045746_81_2544/20260828_045746_81_2544.json",
+      "type": "application/json",
+      "title": "2026-08-28T04:57:46.818334Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260828_045749_15_2544/20260828_045749_15_2544.json",
+      "type": "application/json",
+      "title": "2026-08-28T04:57:49.154803Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260828_050143_19_2520/20260828_050143_19_2520.json",
+      "type": "application/json",
+      "title": "2026-08-28T05:01:43.195327Z"
+    }
+  ]
+}

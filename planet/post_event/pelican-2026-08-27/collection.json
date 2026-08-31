@@ -1,0 +1,174 @@
+{
+  "type": "Collection",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/item-assets/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/eo/v1.0.0/schema.json"
+  ],
+  "id": "post-event-pelican-2026-08-27",
+  "title": "Syabrubesi to Rasuwagadhi (Pelican) — Post-event Imagery",
+  "description": "Very-high-resolution Pelican coverage of the flood corridor, acquired 06:10 UTC on 27 August 2026, about four hours after the SkySat collects and roughly a day after the flood. Three sequential frames run north from Syabrubesi to the Rasuwagadhi border crossing, overlapping the SkySat footprints. At roughly 0.55 m ground sample distance this is the sharpest imagery in the catalog. Planet reports 83–85% cloud and a clear fraction of 0% for all three frames, but that clear figure is not consistent with the imagery: each frame carries substantial interpretable ground, including a bright sediment-laden river channel traceable along the corridor. Treat the reported clear fraction with caution and inspect the scenes directly. 3 scenes; each Item carries the available visual, pansharpened, udm2 assets.",
+  "license": "CC-BY-NC-4.0",
+  "keywords": [
+    "disaster response",
+    "Planet",
+    "satellite imagery",
+    "flood",
+    "outburst flood",
+    "GLOF",
+    "Nepal",
+    "Bhote Koshi",
+    "Trishuli",
+    "Rasuwa",
+    "Gyirong",
+    "Tibet Autonomous Region",
+    "post-event",
+    "Pelican",
+    "very high resolution",
+    "Syabrubesi",
+    "Rasuwagadhi",
+    "damage assessment",
+    "pansharpened",
+    "Syabrubesi to Rasuwagadhi (Pelican)"
+  ],
+  "providers": [
+    {
+      "name": "Planet Labs PBC",
+      "roles": [
+        "producer",
+        "processor",
+        "licensor"
+      ],
+      "url": "https://www.planet.com/"
+    },
+    {
+      "name": "Planet Crisis Response Program",
+      "roles": [
+        "host"
+      ],
+      "url": "https://www.planet.com/disasterdata/"
+    }
+  ],
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          85.28073829606639,
+          28.07866185523995,
+          85.43406669026984,
+          28.35121763114424
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2026-08-27T06:09:56.991050Z",
+          "2026-08-27T06:09:59.659256Z"
+        ]
+      ]
+    }
+  },
+  "summaries": {
+    "platform": [
+      "3009"
+    ],
+    "constellation": [
+      "pelican"
+    ]
+  },
+  "item_assets": {
+    "visual": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data",
+        "visual"
+      ],
+      "title": "Visual (true-colour RGB) ortho COG"
+    },
+    "pansharpened": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data"
+      ],
+      "title": "Pansharpened multiband ortho COG"
+    },
+    "udm2": {
+      "type": "image/tiff; application=geotiff",
+      "roles": [
+        "data",
+        "cloud",
+        "cloud-shadow",
+        "snow-ice"
+      ],
+      "title": "Usable Data Mask (UDM2)"
+    }
+  },
+  "assets": {
+    "thumbnail": {
+      "href": "./thumbnail.png",
+      "type": "image/png",
+      "roles": [
+        "thumbnail"
+      ],
+      "title": "Syabrubesi to Rasuwagadhi (Pelican) preview"
+    },
+    "geoparquet-items": {
+      "href": "./items.parquet",
+      "type": "application/vnd.apache.parquet",
+      "roles": [
+        "metadata",
+        "stac-items"
+      ],
+      "title": "STAC-GeoParquet item index (3 items)"
+    }
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "../../catalog.json",
+      "type": "application/json",
+      "title": "Planet Crisis Response — Bhote Koshi–Trishuli Outburst Flood, Nepal (2026)"
+    },
+    {
+      "rel": "parent",
+      "href": "../catalog.json",
+      "type": "application/json",
+      "title": "Post-event imagery"
+    },
+    {
+      "rel": "self",
+      "href": "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/post-event/pelican-2026-08-27/collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "license",
+      "href": "https://creativecommons.org/licenses/by-nc/4.0/",
+      "type": "text/html",
+      "title": "CC-BY-NC-4.0"
+    },
+    {
+      "rel": "thumbnail",
+      "href": "./thumbnail.png",
+      "type": "image/png"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260827_060956_98_3009/20260827_060956_98_3009.json",
+      "type": "application/json",
+      "title": "2026-08-27T06:09:56.991050Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260827_060958_31_3009/20260827_060958_31_3009.json",
+      "type": "application/json",
+      "title": "2026-08-27T06:09:58.325153Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260827_060959_65_3009/20260827_060959_65_3009.json",
+      "type": "application/json",
+      "title": "2026-08-27T06:09:59.659256Z"
+    }
+  ]
+}

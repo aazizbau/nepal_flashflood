@@ -1,0 +1,359 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/eo/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/view/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/raster/v1.1.0/schema.json",
+    "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
+  ],
+  "id": "20260827_060956_98_3009",
+  "bbox": [
+    85.31918550951734,
+    28.24911357422872,
+    85.43406669026984,
+    28.35121763114424
+  ],
+  "geometry": {
+    "coordinates": [
+      [
+        [
+          85.33889798257499,
+          28.35121763114424
+        ],
+        [
+          85.31918550951734,
+          28.2661375282364
+        ],
+        [
+          85.41382376956273,
+          28.24911357422872
+        ],
+        [
+          85.43406669026984,
+          28.334115698528574
+        ],
+        [
+          85.33889798257499,
+          28.35121763114424
+        ]
+      ]
+    ],
+    "type": "Polygon"
+  },
+  "properties": {
+    "updated": "2026-08-27T07:33:45Z",
+    "created": "2026-08-27T07:33:45Z",
+    "gsd": 0.55,
+    "constellation": "pelican",
+    "platform": "3009",
+    "eo:cloud_cover": 85,
+    "view:off_nadir": 3.8,
+    "view:azimuth": 255.9,
+    "view:sun_azimuth": 171.2,
+    "view:sun_elevation": 71.6,
+    "pl:ground_control": true,
+    "pl:item_type": "PelicanScene",
+    "pl:pixel_resolution": 0.5,
+    "pl:publishing_stage": "finalized",
+    "pl:quality_category": "standard",
+    "pl:strip_id": "20260827_060956_98_3009_strip",
+    "published": "2026-08-27T07:33:45Z",
+    "datetime": "2026-08-27T06:09:56.991050Z"
+  },
+  "collection": "post-event-pelican-2026-08-27",
+  "assets": {
+    "visual": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "pl:asset_type": "ortho_visual",
+      "pl:bundle_type": "visual",
+      "raster:bands": [
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 255.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 255.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 255.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 255.0
+          }
+        }
+      ],
+      "proj:epsg": 32645,
+      "proj:bbox": [
+        335132.5,
+        3125818.0,
+        346500.5,
+        3137230.5
+      ],
+      "proj:shape": [
+        22825,
+        22736
+      ],
+      "proj:transform": [
+        0.5,
+        0.0,
+        335132.5,
+        0.0,
+        -0.5,
+        3137230.5,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roles": [
+        "data",
+        "visual"
+      ],
+      "href": "./20260827_060956_98_3009_visual.tif",
+      "title": "Visual (true-colour RGB) ortho COG"
+    },
+    "pansharpened": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "pl:asset_type": "ortho_pansharpened",
+      "pl:bundle_type": "pansharpened_udm2",
+      "raster:bands": [
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 11968.0,
+            "maximum": 58588.0
+          }
+        },
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 10257.0,
+            "maximum": 33961.0
+          }
+        },
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 7934.0,
+            "maximum": 34764.0
+          }
+        },
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 6403.0,
+            "maximum": 29368.0
+          }
+        },
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 7554.0,
+            "maximum": 42197.0
+          }
+        },
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 7926.0,
+            "maximum": 39092.0
+          }
+        }
+      ],
+      "proj:epsg": 32645,
+      "proj:bbox": [
+        335132.5,
+        3125818.0,
+        346500.5,
+        3137230.5
+      ],
+      "proj:shape": [
+        22825,
+        22736
+      ],
+      "proj:transform": [
+        0.5,
+        0.0,
+        335132.5,
+        0.0,
+        -0.5,
+        3137230.5,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roles": [
+        "data"
+      ],
+      "href": "./20260827_060956_98_3009_pansharpened.tif",
+      "title": "Pansharpened multiband ortho COG"
+    },
+    "udm2": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "pl:asset_type": "ortho_pansharpened_udm2",
+      "pl:bundle_type": "pansharpened_udm2",
+      "raster:bands": [
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 0.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 0.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 100.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 2.0
+          }
+        }
+      ],
+      "proj:epsg": 32645,
+      "proj:bbox": [
+        335132.5,
+        3125818.0,
+        346500.5,
+        3137230.5
+      ],
+      "proj:shape": [
+        22825,
+        22736
+      ],
+      "proj:transform": [
+        0.5,
+        0.0,
+        335132.5,
+        0.0,
+        -0.5,
+        3137230.5,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roles": [
+        "data",
+        "snow-ice",
+        "cloud",
+        "cloud-shadow"
+      ],
+      "href": "./20260827_060956_98_3009_udm2.tif",
+      "title": "Usable Data Mask (UDM2) — per-pixel quality"
+    },
+    "thumbnail": {
+      "href": "./20260827_060956_98_3009_thumbnail.png",
+      "type": "image/png",
+      "roles": [
+        "thumbnail"
+      ],
+      "title": "Thumbnail"
+    }
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "../../../../catalog.json",
+      "type": "application/json",
+      "title": "Planet Crisis Response — Bhote Koshi–Trishuli Outburst Flood, Nepal (2026)"
+    },
+    {
+      "rel": "parent",
+      "href": "../../collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "collection",
+      "href": "../../collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "self",
+      "href": "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/post-event/pelican-2026-08-27/items/20260827_060956_98_3009/20260827_060956_98_3009.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "thumbnail",
+      "href": "./20260827_060956_98_3009_thumbnail.png",
+      "type": "image/png"
+    }
+  ]
+}

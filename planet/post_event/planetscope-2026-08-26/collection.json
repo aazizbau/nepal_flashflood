@@ -1,0 +1,211 @@
+{
+  "type": "Collection",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/item-assets/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/eo/v1.0.0/schema.json"
+  ],
+  "id": "post-event-planetscope-2026-08-26",
+  "title": "Flood corridor, same-day coverage — Post-event Imagery",
+  "description": "Post-event coverage acquired the morning of the flood. Two adjacent PlanetScope swaths — western at 05:01 UTC, eastern at 05:45 UTC — together spanning the corridor from Trishuli Bazaar north across the Nepal–China border into Gyirong County, and east toward the Langtang valley. Monsoon cloud is heavy: per-scene cloud cover 62–93%, clear fraction 2–14%. Ground visibility is limited and varies sharply between scenes. 9 scenes; each Item carries the available visual, analytic, udm2 assets.",
+  "license": "CC-BY-NC-4.0",
+  "keywords": [
+    "disaster response",
+    "Planet",
+    "satellite imagery",
+    "flood",
+    "outburst flood",
+    "GLOF",
+    "Nepal",
+    "Bhote Koshi",
+    "Trishuli",
+    "Rasuwa",
+    "Gyirong",
+    "Tibet Autonomous Region",
+    "post-event",
+    "Nuwakot",
+    "Rasuwagadhi",
+    "Langtang",
+    "damage assessment",
+    "cloud-affected",
+    "Flood corridor, same-day coverage"
+  ],
+  "providers": [
+    {
+      "name": "Planet Labs PBC",
+      "roles": [
+        "producer",
+        "processor",
+        "licensor"
+      ],
+      "url": "https://www.planet.com/"
+    },
+    {
+      "name": "Planet Crisis Response Program",
+      "roles": [
+        "host"
+      ],
+      "url": "https://www.planet.com/disasterdata/"
+    }
+  ],
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          84.89430713064114,
+          27.82925610548352,
+          85.64803236569306,
+          28.659453856281846
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2026-08-26T05:01:25.993228Z",
+          "2026-08-26T05:45:02.866447Z"
+        ]
+      ]
+    }
+  },
+  "summaries": {
+    "platform": [
+      "251f",
+      "255f"
+    ],
+    "constellation": [
+      "planetscope"
+    ]
+  },
+  "item_assets": {
+    "visual": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data",
+        "visual"
+      ],
+      "title": "Visual (true-colour RGB) ortho COG"
+    },
+    "analytic": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data",
+        "reflectance"
+      ],
+      "title": "Analytic (radiance) ortho COG"
+    },
+    "udm2": {
+      "type": "image/tiff; application=geotiff",
+      "roles": [
+        "data",
+        "cloud",
+        "cloud-shadow",
+        "snow-ice"
+      ],
+      "title": "Usable Data Mask (UDM2)"
+    }
+  },
+  "assets": {
+    "thumbnail": {
+      "href": "./thumbnail.png",
+      "type": "image/png",
+      "roles": [
+        "thumbnail"
+      ],
+      "title": "Flood corridor, same-day coverage preview"
+    },
+    "geoparquet-items": {
+      "href": "./items.parquet",
+      "type": "application/vnd.apache.parquet",
+      "roles": [
+        "metadata",
+        "stac-items"
+      ],
+      "title": "STAC-GeoParquet item index (9 items)"
+    }
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "../../catalog.json",
+      "type": "application/json",
+      "title": "Planet Crisis Response — Bhote Koshi–Trishuli Outburst Flood, Nepal (2026)"
+    },
+    {
+      "rel": "parent",
+      "href": "../catalog.json",
+      "type": "application/json",
+      "title": "Post-event imagery"
+    },
+    {
+      "rel": "self",
+      "href": "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/post-event/planetscope-2026-08-26/collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "license",
+      "href": "https://creativecommons.org/licenses/by-nc/4.0/",
+      "type": "text/html",
+      "title": "CC-BY-NC-4.0"
+    },
+    {
+      "rel": "thumbnail",
+      "href": "./thumbnail.png",
+      "type": "image/png"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260826_050125_99_255f/20260826_050125_99_255f.json",
+      "type": "application/json",
+      "title": "2026-08-26T05:01:25.993228Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260826_050128_33_255f/20260826_050128_33_255f.json",
+      "type": "application/json",
+      "title": "2026-08-26T05:01:28.330973Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260826_050130_66_255f/20260826_050130_66_255f.json",
+      "type": "application/json",
+      "title": "2026-08-26T05:01:30.668664Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260826_050133_00_255f/20260826_050133_00_255f.json",
+      "type": "application/json",
+      "title": "2026-08-26T05:01:33.006355Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260826_050135_34_255f/20260826_050135_34_255f.json",
+      "type": "application/json",
+      "title": "2026-08-26T05:01:35.344100Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260826_054456_67_251f/20260826_054456_67_251f.json",
+      "type": "application/json",
+      "title": "2026-08-26T05:44:56.678410Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260826_054458_74_251f/20260826_054458_74_251f.json",
+      "type": "application/json",
+      "title": "2026-08-26T05:44:58.741089Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260826_054500_80_251f/20260826_054500_80_251f.json",
+      "type": "application/json",
+      "title": "2026-08-26T05:45:00.803768Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260826_054502_86_251f/20260826_054502_86_251f.json",
+      "type": "application/json",
+      "title": "2026-08-26T05:45:02.866447Z"
+    }
+  ]
+}

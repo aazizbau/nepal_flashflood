@@ -1,0 +1,597 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/eo/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/view/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/raster/v1.1.0/schema.json",
+    "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
+  ],
+  "id": "20260827_020055_ssc1_u0002",
+  "bbox": [
+    85.27866937363794,
+    28.08220613716806,
+    85.37428924611466,
+    28.210064167443992
+  ],
+  "geometry": {
+    "coordinates": [
+      [
+        [
+          85.28861691093543,
+          28.09669317194252
+        ],
+        [
+          85.28850542681442,
+          28.096737030824602
+        ],
+        [
+          85.29198417434417,
+          28.104129762262943
+        ],
+        [
+          85.29188893908459,
+          28.10417308845204
+        ],
+        [
+          85.29612257425856,
+          28.11229813480566
+        ],
+        [
+          85.2961383267641,
+          28.112292645245024
+        ],
+        [
+          85.29790629784861,
+          28.11564463613596
+        ],
+        [
+          85.27866937363794,
+          28.124249155998797
+        ],
+        [
+          85.28239657194611,
+          28.133663472956933
+        ],
+        [
+          85.2821264961374,
+          28.133836071329668
+        ],
+        [
+          85.28578016527305,
+          28.14245175885462
+        ],
+        [
+          85.28562784085926,
+          28.14254406019108
+        ],
+        [
+          85.28993529758857,
+          28.151672798005254
+        ],
+        [
+          85.2899777759277,
+          28.151646097365077
+        ],
+        [
+          85.29286794640026,
+          28.159500379366335
+        ],
+        [
+          85.29261864676842,
+          28.15969157625948
+        ],
+        [
+          85.29600282987506,
+          28.166181585128236
+        ],
+        [
+          85.29589809501965,
+          28.166254763069084
+        ],
+        [
+          85.29921265977133,
+          28.172427063867783
+        ],
+        [
+          85.29906518297729,
+          28.172493346883698
+        ],
+        [
+          85.30241906715665,
+          28.17841951612065
+        ],
+        [
+          85.30220108653208,
+          28.178503826985917
+        ],
+        [
+          85.30591809685279,
+          28.187703322471535
+        ],
+        [
+          85.30915631982228,
+          28.19712739720371
+        ],
+        [
+          85.30882141514849,
+          28.197360241491953
+        ],
+        [
+          85.31336265100809,
+          28.210064167443992
+        ],
+        [
+          85.33504543156684,
+          28.193701558025626
+        ],
+        [
+          85.33165403293548,
+          28.18520010568687
+        ],
+        [
+          85.33182560786031,
+          28.18508293300441
+        ],
+        [
+          85.32829868390252,
+          28.177328335038574
+        ],
+        [
+          85.32853065194226,
+          28.177197327432193
+        ],
+        [
+          85.3253132195962,
+          28.171523355539385
+        ],
+        [
+          85.32551196104382,
+          28.171447692390778
+        ],
+        [
+          85.32235076885271,
+          28.164947578856587
+        ],
+        [
+          85.33915209928826,
+          28.156437463962313
+        ],
+        [
+          85.34106420174254,
+          28.16018376443395
+        ],
+        [
+          85.3409272442028,
+          28.160244249602727
+        ],
+        [
+          85.34405550438467,
+          28.166944948397532
+        ],
+        [
+          85.34402306492764,
+          28.16695128895101
+        ],
+        [
+          85.34739427339456,
+          28.17525798752086
+        ],
+        [
+          85.34725653669602,
+          28.17528412195811
+        ],
+        [
+          85.3516751463768,
+          28.18621103185393
+        ],
+        [
+          85.37428924611466,
+          28.183039418271342
+        ],
+        [
+          85.37074161360549,
+          28.173471667372723
+        ],
+        [
+          85.37102427608313,
+          28.17341235342691
+        ],
+        [
+          85.36738760136528,
+          28.164481787588283
+        ],
+        [
+          85.36363751380772,
+          28.15213721450967
+        ],
+        [
+          85.36413052263464,
+          28.151913342471335
+        ],
+        [
+          85.36022746605384,
+          28.14553433740717
+        ],
+        [
+          85.35756420842681,
+          28.14057063579844
+        ],
+        [
+          85.35763491558478,
+          28.140542928314364
+        ],
+        [
+          85.35348887458758,
+          28.133187692032397
+        ],
+        [
+          85.35343266578786,
+          28.133208532303332
+        ],
+        [
+          85.35008923221054,
+          28.126999507666135
+        ],
+        [
+          85.35002423804237,
+          28.127017908070137
+        ],
+        [
+          85.34755039222011,
+          28.122371539041932
+        ],
+        [
+          85.34755173672524,
+          28.12237119400291
+        ],
+        [
+          85.34402965050424,
+          28.11516216036011
+        ],
+        [
+          85.33986293034788,
+          28.10357905168672
+        ],
+        [
+          85.32054129913992,
+          28.108874339871004
+        ],
+        [
+          85.31741426104784,
+          28.100706417420145
+        ],
+        [
+          85.31690679722973,
+          28.100933773657623
+        ],
+        [
+          85.31468986745563,
+          28.09568355502098
+        ],
+        [
+          85.31488636502701,
+          28.095592642228013
+        ],
+        [
+          85.31161067572619,
+          28.089604905484613
+        ],
+        [
+          85.31169588958923,
+          28.089570720336614
+        ],
+        [
+          85.30757659152012,
+          28.08220613716806
+        ],
+        [
+          85.28527349759734,
+          28.089936139853375
+        ],
+        [
+          85.28861691093543,
+          28.09669317194252
+        ]
+      ]
+    ],
+    "type": "Polygon"
+  },
+  "properties": {
+    "updated": "2026-08-27T05:09:07Z",
+    "created": "2026-08-27T05:09:07Z",
+    "gsd": 0.79,
+    "constellation": "skysat",
+    "platform": "SSC1",
+    "eo:cloud_cover": 50,
+    "view:off_nadir": 28.2,
+    "view:azimuth": 3.7,
+    "view:sun_azimuth": 92.7,
+    "view:sun_elevation": 26.9,
+    "pl:ground_control_ratio": 1,
+    "pl:item_type": "SkySatCollect",
+    "pl:pixel_resolution": 0.5,
+    "pl:publishing_stage": "finalized",
+    "pl:quality_category": "standard",
+    "pl:strip_id": "s3_20260827T020055Z",
+    "published": "2026-08-27T05:09:07Z",
+    "datetime": "2026-08-27T02:00:55.499000Z"
+  },
+  "collection": "post-event-skysat-2026-08-27",
+  "assets": {
+    "visual": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "pl:asset_type": "ortho_visual",
+      "pl:bundle_type": "visual",
+      "raster:bands": [
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 255.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 255.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 255.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 255.0
+          }
+        }
+      ],
+      "eo:bands": [
+        {
+          "name": "Red",
+          "common_name": "red",
+          "center_wavelength": 0.65,
+          "full_width_half_max": 0.09
+        },
+        {
+          "name": "Green",
+          "common_name": "green",
+          "center_wavelength": 0.555,
+          "full_width_half_max": 0.08
+        },
+        {
+          "name": "Blue",
+          "common_name": "blue",
+          "center_wavelength": 0.483,
+          "full_width_half_max": 0.065
+        },
+        {
+          "name": "Alpha",
+          "description": "Pixel opacity (0: fully transparent; 255: fully opaque)"
+        }
+      ],
+      "proj:epsg": 32645,
+      "proj:bbox": [
+        330934.5,
+        3107465.0,
+        340415.0,
+        3121624.5
+      ],
+      "proj:shape": [
+        28319,
+        18961
+      ],
+      "proj:transform": [
+        0.5,
+        0.0,
+        330934.5,
+        0.0,
+        -0.5,
+        3121624.5,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roles": [
+        "data",
+        "visual"
+      ],
+      "href": "./20260827_020055_ssc1_u0002_visual.tif",
+      "title": "Visual (true-colour RGB) ortho COG"
+    },
+    "pansharpened": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "pl:asset_type": "ortho_pansharpened",
+      "pl:bundle_type": "pansharpened",
+      "raster:bands": [
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 81.0,
+            "maximum": 4480.0
+          }
+        },
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 50.0,
+            "maximum": 5427.0
+          }
+        },
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 30.0,
+            "maximum": 5454.0
+          }
+        },
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 16.0,
+            "maximum": 3943.0
+          }
+        }
+      ],
+      "eo:bands": [
+        {
+          "name": "Blue",
+          "common_name": "blue",
+          "center_wavelength": 0.483,
+          "full_width_half_max": 0.065
+        },
+        {
+          "name": "Green",
+          "common_name": "green",
+          "center_wavelength": 0.555,
+          "full_width_half_max": 0.08
+        },
+        {
+          "name": "Red",
+          "common_name": "red",
+          "center_wavelength": 0.65,
+          "full_width_half_max": 0.09
+        },
+        {
+          "name": "Near-Infrared",
+          "common_name": "nir",
+          "center_wavelength": 0.82,
+          "full_width_half_max": 0.16
+        }
+      ],
+      "proj:epsg": 32645,
+      "proj:bbox": [
+        330934.5,
+        3107465.0,
+        340415.0,
+        3121624.5
+      ],
+      "proj:shape": [
+        28319,
+        18961
+      ],
+      "proj:transform": [
+        0.5,
+        0.0,
+        330934.5,
+        0.0,
+        -0.5,
+        3121624.5,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roles": [
+        "data"
+      ],
+      "href": "./20260827_020055_ssc1_u0002_pansharpened.tif",
+      "title": "Pansharpened multiband ortho COG"
+    },
+    "udm": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "pl:asset_type": "ortho_pansharpened_udm",
+      "pl:bundle_type": "pansharpened",
+      "raster:bands": [
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 0.5,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 2.0
+          }
+        }
+      ],
+      "eo:bands": [
+        {
+          "name": "B1",
+          "description": "Unusable pixels"
+        }
+      ],
+      "proj:epsg": 32645,
+      "proj:bbox": [
+        330934.5,
+        3107465.0,
+        340415.0,
+        3121624.5
+      ],
+      "proj:shape": [
+        28319,
+        18961
+      ],
+      "proj:transform": [
+        0.5,
+        0.0,
+        330934.5,
+        0.0,
+        -0.5,
+        3121624.5,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roles": [
+        "data",
+        "snow-ice",
+        "cloud",
+        "cloud-shadow"
+      ],
+      "href": "./20260827_020055_ssc1_u0002_udm.tif",
+      "title": "Unusable Data Mask (UDM)"
+    },
+    "thumbnail": {
+      "href": "./20260827_020055_ssc1_u0002_thumbnail.png",
+      "type": "image/png",
+      "roles": [
+        "thumbnail"
+      ],
+      "title": "Thumbnail"
+    }
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "../../../../catalog.json",
+      "type": "application/json",
+      "title": "Planet Crisis Response — Bhote Koshi–Trishuli Outburst Flood, Nepal (2026)"
+    },
+    {
+      "rel": "parent",
+      "href": "../../collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "collection",
+      "href": "../../collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "self",
+      "href": "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/post-event/skysat-2026-08-27/items/20260827_020055_ssc1_u0002/20260827_020055_ssc1_u0002.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "thumbnail",
+      "href": "./20260827_020055_ssc1_u0002_thumbnail.png",
+      "type": "image/png"
+    }
+  ]
+}

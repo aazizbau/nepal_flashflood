@@ -1,0 +1,56 @@
+{
+  "type": "Catalog",
+  "stac_version": "1.0.0",
+  "id": "post-event",
+  "title": "Post-event imagery",
+  "description": "Planet imagery acquired on/after the event, grouped by acquisition date.",
+  "links": [
+    {
+      "rel": "root",
+      "href": "../catalog.json",
+      "type": "application/json",
+      "title": "Planet Crisis Response — Bhote Koshi–Trishuli Outburst Flood, Nepal (2026)"
+    },
+    {
+      "rel": "parent",
+      "href": "../catalog.json",
+      "type": "application/json",
+      "title": "Planet Crisis Response — Bhote Koshi–Trishuli Outburst Flood, Nepal (2026)"
+    },
+    {
+      "rel": "self",
+      "href": "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/post-event/catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "href": "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/post-event/items.parquet",
+      "type": "application/vnd.apache.parquet",
+      "title": "STAC-GeoParquet item index"
+    },
+    {
+      "rel": "child",
+      "href": "./pelican-2026-08-27/collection.json",
+      "type": "application/json",
+      "title": "Syabrubesi to Rasuwagadhi (Pelican) — Post-event Imagery"
+    },
+    {
+      "rel": "child",
+      "href": "./planetscope-2026-08-26/collection.json",
+      "type": "application/json",
+      "title": "Flood corridor, same-day coverage — Post-event Imagery"
+    },
+    {
+      "rel": "child",
+      "href": "./planetscope-2026-08-28/collection.json",
+      "type": "application/json",
+      "title": "Corridor and lower Trishuli, two days after — Post-event Imagery"
+    },
+    {
+      "rel": "child",
+      "href": "./skysat-2026-08-27/collection.json",
+      "type": "application/json",
+      "title": "Rasuwagadhi and Syabrubesi (SkySat) — Post-event Imagery"
+    }
+  ]
+}

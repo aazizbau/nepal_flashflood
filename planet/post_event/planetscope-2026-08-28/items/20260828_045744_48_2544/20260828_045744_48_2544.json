@@ -1,0 +1,433 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/eo/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/view/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/raster/v1.1.0/schema.json",
+    "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
+  ],
+  "id": "20260828_045744_48_2544",
+  "bbox": [
+    85.15919520420613,
+    28.122752444890036,
+    85.5426473696999,
+    28.363831110956383
+  ],
+  "geometry": {
+    "coordinates": [
+      [
+        [
+          85.20143122140615,
+          28.363831110956383
+        ],
+        [
+          85.15919520420613,
+          28.183465187707444
+        ],
+        [
+          85.50104232209779,
+          28.122752444890036
+        ],
+        [
+          85.5426473696999,
+          28.30185393864909
+        ],
+        [
+          85.20143122140615,
+          28.363831110956383
+        ]
+      ]
+    ],
+    "type": "Polygon"
+  },
+  "properties": {
+    "updated": "2026-08-28T14:45:12Z",
+    "created": "2026-08-28T09:00:58Z",
+    "gsd": 3.8,
+    "constellation": "planetscope",
+    "platform": "2544",
+    "instruments": [
+      "PSB.SD"
+    ],
+    "eo:cloud_cover": 81,
+    "view:off_nadir": 3.9,
+    "view:azimuth": 100.4,
+    "view:sun_azimuth": 130.3,
+    "view:sun_elevation": 63.5,
+    "pl:data_version": "20260828T091030Z",
+    "pl:ground_control": true,
+    "pl:item_type": "PSScene",
+    "pl:pixel_resolution": 3,
+    "pl:publishing_stage": "finalized",
+    "pl:quality_category": "standard",
+    "pl:strip_id": "8985177",
+    "published": "2026-08-28T09:00:58Z",
+    "datetime": "2026-08-28T04:57:44.481921Z"
+  },
+  "collection": "post-event-planetscope-2026-08-28",
+  "assets": {
+    "visual": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "pl:asset_type": "ortho_visual",
+      "pl:bundle_type": "visual",
+      "raster:bands": [
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 255.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 255.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 255.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 255.0
+          }
+        }
+      ],
+      "eo:bands": [
+        {
+          "name": "Red",
+          "common_name": "red",
+          "center_wavelength": 0.665,
+          "full_width_half_max": 0.03
+        },
+        {
+          "name": "Green",
+          "common_name": "green",
+          "center_wavelength": 0.565,
+          "full_width_half_max": 0.036
+        },
+        {
+          "name": "Blue",
+          "common_name": "blue",
+          "center_wavelength": 0.49,
+          "full_width_half_max": 0.05
+        },
+        {
+          "name": "Alpha",
+          "description": "Pixel opacity (0: fully transparent; 255: fully opaque)"
+        }
+      ],
+      "proj:epsg": 32645,
+      "proj:bbox": [
+        319296.0,
+        3111708.0,
+        357099.0,
+        3138822.0
+      ],
+      "proj:shape": [
+        9038,
+        12601
+      ],
+      "proj:transform": [
+        3.0,
+        0.0,
+        319296.0,
+        0.0,
+        -3.0,
+        3138822.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roles": [
+        "data",
+        "visual"
+      ],
+      "href": "./20260828_045744_48_2544_visual.tif",
+      "title": "Visual (true-colour RGB) ortho COG"
+    },
+    "analytic": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "pl:asset_type": "ortho_analytic_4b",
+      "pl:bundle_type": "analytic_udm2",
+      "raster:bands": [
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 3833.0,
+            "maximum": 65535.0
+          },
+          "scale": 1.817263242472217e-05
+        },
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 2397.0,
+            "maximum": 62428.0
+          },
+          "scale": 1.97096313171696e-05
+        },
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 1447.0,
+            "maximum": 53318.0
+          },
+          "scale": 2.372326242671409e-05
+        },
+        {
+          "nodata": 0.0,
+          "data_type": "uint16",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 1216.0,
+            "maximum": 33609.0
+          },
+          "scale": 3.7547959483300284e-05
+        }
+      ],
+      "eo:bands": [
+        {
+          "name": "Blue",
+          "common_name": "blue",
+          "center_wavelength": 0.49,
+          "full_width_half_max": 0.05
+        },
+        {
+          "name": "Green",
+          "common_name": "green",
+          "center_wavelength": 0.565,
+          "full_width_half_max": 0.036
+        },
+        {
+          "name": "Red",
+          "common_name": "red",
+          "center_wavelength": 0.665,
+          "full_width_half_max": 0.03
+        },
+        {
+          "name": "Near-Infrared",
+          "common_name": "nir",
+          "center_wavelength": 0.865,
+          "full_width_half_max": 0.04
+        }
+      ],
+      "proj:epsg": 32645,
+      "proj:bbox": [
+        319296.0,
+        3111708.0,
+        357099.0,
+        3138822.0
+      ],
+      "proj:shape": [
+        9038,
+        12601
+      ],
+      "proj:transform": [
+        3.0,
+        0.0,
+        319296.0,
+        0.0,
+        -3.0,
+        3138822.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roles": [
+        "data"
+      ],
+      "href": "./20260828_045744_48_2544_analytic.tif",
+      "title": "Analytic 4-band ortho COG"
+    },
+    "udm2": {
+      "type": "image/tiff",
+      "pl:asset_type": "ortho_udm2",
+      "pl:bundle_type": "analytic_udm2",
+      "raster:bands": [
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 0.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 100.0
+          }
+        },
+        {
+          "data_type": "uint8",
+          "spatial_resolution": 3.0,
+          "statistics": {
+            "minimum": 0.0,
+            "maximum": 142.0
+          }
+        }
+      ],
+      "eo:bands": [
+        {
+          "name": "B1",
+          "description": "Clear map (0: not clear, 1: clear)"
+        },
+        {
+          "name": "B2",
+          "description": "Snow map (0: no snow or ice, 1: snow or ice)"
+        },
+        {
+          "name": "B3",
+          "description": "Shadow map (0: no shadow, 1: shadow)"
+        },
+        {
+          "name": "B4",
+          "description": "Light haze map (0: no light haze, 1: light haze)"
+        },
+        {
+          "name": "B5",
+          "description": "Heavy haze map (0: no heavy haze, 1: heavy haze)"
+        },
+        {
+          "name": "B6",
+          "description": "Cloud map (0: no cloud, 1: cloud)"
+        },
+        {
+          "name": "B7",
+          "description": "Confidence map (percentage value: per-pixel algorithmic confidence in classification)"
+        },
+        {
+          "name": "B8",
+          "description": "Unusable pixels"
+        }
+      ],
+      "proj:epsg": 32645,
+      "proj:bbox": [
+        319296.0,
+        3111708.0,
+        357099.0,
+        3138822.0
+      ],
+      "proj:shape": [
+        9038,
+        12601
+      ],
+      "proj:transform": [
+        3.0,
+        0.0,
+        319296.0,
+        0.0,
+        -3.0,
+        3138822.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roles": [
+        "data",
+        "snow-ice",
+        "cloud",
+        "cloud-shadow"
+      ],
+      "href": "./20260828_045744_48_2544_udm2.tif",
+      "title": "Usable Data Mask (UDM2) — per-pixel quality"
+    },
+    "thumbnail": {
+      "href": "./20260828_045744_48_2544_thumbnail.png",
+      "type": "image/png",
+      "roles": [
+        "thumbnail"
+      ],
+      "title": "Thumbnail"
+    }
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "../../../../catalog.json",
+      "type": "application/json",
+      "title": "Planet Crisis Response — Bhote Koshi–Trishuli Outburst Flood, Nepal (2026)"
+    },
+    {
+      "rel": "parent",
+      "href": "../../collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "collection",
+      "href": "../../collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "self",
+      "href": "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/post-event/planetscope-2026-08-28/items/20260828_045744_48_2544/20260828_045744_48_2544.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "thumbnail",
+      "href": "./20260828_045744_48_2544_thumbnail.png",
+      "type": "image/png"
+    }
+  ]
+}

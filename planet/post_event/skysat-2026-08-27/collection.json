@@ -1,0 +1,165 @@
+{
+  "type": "Collection",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/item-assets/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/eo/v1.0.0/schema.json"
+  ],
+  "id": "post-event-skysat-2026-08-27",
+  "title": "Rasuwagadhi and Syabrubesi (SkySat) — Post-event Imagery",
+  "description": "High-resolution SkySat coverage of two focal points on the flood corridor, acquired 02:00 UTC on 27 August 2026, about a day after the flood. One collect covers the Rasuwagadhi border crossing, the other Syabrubesi and the upper Trishuli. At roughly 0.8 m ground sample distance these resolve individual buildings, bridges and road sections — far finer detail than the 3.8 m PlanetScope scenes. Both carry 50% cloud with a clear fraction near 8%, so usable ground is patchy but sharp where visible. 2 scenes; each Item carries the available visual, pansharpened, udm assets.",
+  "license": "CC-BY-NC-4.0",
+  "keywords": [
+    "disaster response",
+    "Planet",
+    "satellite imagery",
+    "flood",
+    "outburst flood",
+    "GLOF",
+    "Nepal",
+    "Bhote Koshi",
+    "Trishuli",
+    "Rasuwa",
+    "Gyirong",
+    "Tibet Autonomous Region",
+    "post-event",
+    "SkySat",
+    "high resolution",
+    "Rasuwagadhi",
+    "Syabrubesi",
+    "damage assessment",
+    "pansharpened",
+    "Rasuwagadhi and Syabrubesi (SkySat)"
+  ],
+  "providers": [
+    {
+      "name": "Planet Labs PBC",
+      "roles": [
+        "producer",
+        "processor",
+        "licensor"
+      ],
+      "url": "https://www.planet.com/"
+    },
+    {
+      "name": "Planet Crisis Response Program",
+      "roles": [
+        "host"
+      ],
+      "url": "https://www.planet.com/disasterdata/"
+    }
+  ],
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          85.27866937363794,
+          28.08220613716806,
+          85.44279778676618,
+          28.366090958282122
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2026-08-27T02:00:55.499000Z",
+          "2026-08-27T02:00:55.499000Z"
+        ]
+      ]
+    }
+  },
+  "summaries": {
+    "platform": [
+      "SSC1"
+    ],
+    "constellation": [
+      "skysat"
+    ]
+  },
+  "item_assets": {
+    "visual": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data",
+        "visual"
+      ],
+      "title": "Visual (true-colour RGB) ortho COG"
+    },
+    "pansharpened": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data"
+      ],
+      "title": "Pansharpened multiband ortho COG"
+    },
+    "udm": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data"
+      ],
+      "title": "Unusable Data Mask (UDM)"
+    }
+  },
+  "assets": {
+    "thumbnail": {
+      "href": "./thumbnail.png",
+      "type": "image/png",
+      "roles": [
+        "thumbnail"
+      ],
+      "title": "Rasuwagadhi and Syabrubesi (SkySat) preview"
+    },
+    "geoparquet-items": {
+      "href": "./items.parquet",
+      "type": "application/vnd.apache.parquet",
+      "roles": [
+        "metadata",
+        "stac-items"
+      ],
+      "title": "STAC-GeoParquet item index (2 items)"
+    }
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "../../catalog.json",
+      "type": "application/json",
+      "title": "Planet Crisis Response — Bhote Koshi–Trishuli Outburst Flood, Nepal (2026)"
+    },
+    {
+      "rel": "parent",
+      "href": "../catalog.json",
+      "type": "application/json",
+      "title": "Post-event imagery"
+    },
+    {
+      "rel": "self",
+      "href": "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/post-event/skysat-2026-08-27/collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "license",
+      "href": "https://creativecommons.org/licenses/by-nc/4.0/",
+      "type": "text/html",
+      "title": "CC-BY-NC-4.0"
+    },
+    {
+      "rel": "thumbnail",
+      "href": "./thumbnail.png",
+      "type": "image/png"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260827_020055_ssc1_u0001/20260827_020055_ssc1_u0001.json",
+      "type": "application/json",
+      "title": "2026-08-27T02:00:55.499000Z"
+    },
+    {
+      "rel": "item",
+      "href": "./items/20260827_020055_ssc1_u0002/20260827_020055_ssc1_u0002.json",
+      "type": "application/json",
+      "title": "2026-08-27T02:00:55.499000Z"
+    }
+  ]
+}
