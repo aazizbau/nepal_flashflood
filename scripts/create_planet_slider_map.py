@@ -25,20 +25,41 @@ Explicit paths and a larger display mosaic::
       --title "Nepal flash flood: PlanetScope before/after"
 
 Open ``outputs/maps/planet_before_after/index.html`` in a browser. The page
-needs internet access only for the Leaflet libraries and optional basemap; the
-Planet PNG overlays are local files beside the HTML document.
+viewer and Planet PNG overlays are local and work without internet access.
 """
 
 from __future__ import annotations
 
 import argparse
+import html
+import importlib.util
 import json
 import logging
+import os
 from pathlib import Path
 
 import numpy as np
-import rasterio
 from PIL import Image
+from pyproj import datadir as pyproj_datadir
+
+# On Windows, rasterio and pyproj wheels can use different packaged PROJ data
+# locations. Prefer rasterio's matching database, then fall back to pyproj's,
+# before rasterio/GDAL opens a dataset or constructs an EPSG CRS.
+_RASTERIO_SPEC = importlib.util.find_spec("rasterio")
+_PROJ_CANDIDATES = []
+if _RASTERIO_SPEC and _RASTERIO_SPEC.submodule_search_locations:
+    _RASTERIO_DIR = Path(next(iter(_RASTERIO_SPEC.submodule_search_locations)))
+    _PROJ_CANDIDATES.extend((_RASTERIO_DIR / "proj_data", _RASTERIO_DIR / "data"))
+_PROJ_CANDIDATES.append(Path(pyproj_datadir.get_data_dir()))
+_PROJ_DATA = next((path for path in _PROJ_CANDIDATES if (path / "proj.db").is_file()), None)
+if _PROJ_DATA is None:
+    searched = ", ".join(str(path) for path in _PROJ_CANDIDATES)
+    raise RuntimeError(f"Could not find proj.db; searched: {searched}")
+os.environ["PROJ_DATA"] = str(_PROJ_DATA)
+os.environ["PROJ_LIB"] = str(_PROJ_DATA)  # compatibility with older PROJ/GDAL
+os.environ.setdefault("GTIFF_SRS_SOURCE", "EPSG")
+
+import rasterio  # noqa: E402  (PROJ environment must be configured first)
 from rasterio.enums import Resampling
 from rasterio.merge import merge
 from rasterio.transform import array_bounds
@@ -183,45 +204,66 @@ def write_html(
         "allBounds": [[all_south, all_west], [all_north, all_east]],
     }
     config = json.dumps(values, ensure_ascii=False).replace("</", "<\\/")
-    html = f"""<!doctype html>
+    document = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{title}</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>
-html,body,#map{{height:100%;margin:0}} body{{font-family:system-ui,sans-serif}}
-.title{{position:absolute;z-index:1000;top:12px;left:50%;transform:translateX(-50%);
+<title>__TITLE__</title><style>
+*{box-sizing:border-box}html,body,#viewer{height:100%;margin:0}
+body{font-family:system-ui,sans-serif;background:#182028;overflow:hidden}
+#viewer{position:relative;background:linear-gradient(135deg,#25313b,#12181e)}
+.layer{position:absolute;inset:0;overflow:hidden}.layer img{position:absolute;display:block}
+#post-layer{clip-path:inset(0 50% 0 0)}
+.title{position:absolute;z-index:5;top:12px;left:50%;transform:translateX(-50%);
 background:#fffffff0;padding:8px 14px;border-radius:6px;box-shadow:0 1px 5px #0006;
-font-weight:650;text-align:center;pointer-events:none}}
-.labels{{position:absolute;z-index:1000;bottom:22px;left:0;right:0;display:flex;
-justify-content:space-between;padding:0 24px;pointer-events:none}}
-.labels span{{background:#111c;color:white;padding:6px 10px;border-radius:4px}}
-</style></head><body>
-<div class="title"></div><div id="map"></div>
+font-weight:650;text-align:center;pointer-events:none;white-space:nowrap}
+.labels{position:absolute;z-index:5;bottom:22px;left:0;right:0;display:flex;
+justify-content:space-between;padding:0 24px;pointer-events:none}
+.labels span{background:#111d;color:white;padding:6px 10px;border-radius:4px}
+#divider{position:absolute;z-index:4;top:0;bottom:0;left:50%;width:3px;
+background:#fff;box-shadow:0 0 5px #000;pointer-events:none}
+#divider::after{content:'↔';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#fff;
+color:#222;font-size:22px;box-shadow:0 1px 7px #0008}
+#slider{position:absolute;z-index:6;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize}
+.hint{position:absolute;z-index:5;right:12px;top:12px;background:#111b;color:#fff;
+padding:6px 9px;border-radius:4px;font-size:12px;pointer-events:none}
+</style></head><body><div id="viewer">
+<div id="pre-layer" class="layer"></div><div id="post-layer" class="layer"></div>
+<div id="divider"></div>
+<input id="slider" type="range" min="0" max="100" value="50" aria-label="Before and after position">
+<div class="title"></div><div class="hint">Drag left or right</div>
 <div class="labels"><span id="pre-label"></span><span id="post-label"></span></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-side-by-side@2.2.0/leaflet-side-by-side.js"></script>
-<script>
-const cfg={config};
+</div><script>
+const cfg=__CONFIG__;
 document.querySelector('.title').textContent=cfg.title;
 document.getElementById('pre-label').textContent=cfg.preLabel;
 document.getElementById('post-label').textContent=cfg.postLabel;
-const map=L.map('map',{{zoomControl:true}});
-L.tileLayer('https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png',{{
-  maxZoom:19,attribution:'© OpenStreetMap contributors'
-}}).addTo(map);
-const pre=L.imageOverlay('pre_event.png',cfg.preBounds,{{opacity:1}}).addTo(map);
-const post=L.imageOverlay('post_event.png',cfg.postBounds,{{opacity:1}}).addTo(map);
-L.control.sideBySide(pre,post).addTo(map);
-map.fitBounds(cfg.allBounds,{{padding:[12,12]}});
-L.control.layers(null,{{[cfg.preLabel]:pre,[cfg.postLabel]:post}},{{collapsed:true}}).addTo(map);
+function addRaster(layerId,src,bounds){
+  const south=cfg.allBounds[0][0],west=cfg.allBounds[0][1];
+  const north=cfg.allBounds[1][0],east=cfg.allBounds[1][1];
+  const img=document.createElement('img');img.src=src;img.alt='';
+  img.style.left=((bounds[0][1]-west)/(east-west)*100)+'%';
+  img.style.top=((north-bounds[1][0])/(north-south)*100)+'%';
+  img.style.width=((bounds[1][1]-bounds[0][1])/(east-west)*100)+'%';
+  img.style.height=((bounds[1][0]-bounds[0][0])/(north-south)*100)+'%';
+  document.getElementById(layerId).appendChild(img);
+}
+addRaster('pre-layer','pre_event.png',cfg.preBounds);
+addRaster('post-layer','post_event.png',cfg.postBounds);
+const slider=document.getElementById('slider'),post=document.getElementById('post-layer');
+const divider=document.getElementById('divider');
+function update(){const value=slider.value;post.style.clipPath=`inset(0 ${100-value}% 0 0)`;
+divider.style.left=value+'%'}
+slider.addEventListener('input',update);update();
 </script></body></html>"""
-    destination.write_text(html, encoding="utf-8")
+    document = document.replace("__TITLE__", html.escape(title)).replace("__CONFIG__", config)
+    destination.write_text(document, encoding="utf-8")
 
 
 def main() -> None:
     args = parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    LOG.info("Using PROJ data directory: %s", _PROJ_DATA)
     pre_paths = discover(args.pre_dir)
     post_paths = discover(args.post_dir)
     args.output.mkdir(parents=True, exist_ok=True)

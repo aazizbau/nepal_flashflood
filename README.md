@@ -112,7 +112,7 @@ The default inputs are `planet/pre_event/planetscope-2026-05-27` and
 `planet/post_event/planetscope-2026-08-26`. Open
 `outputs/maps/planet_before_after/index.html` after the command finishes. The
 generated PNGs are display products; retain the original GeoTIFFs for analysis.
-The HTML uses online Leaflet libraries and an optional OpenStreetMap basemap.
+The HTML and PNG overlays work offline without external web libraries.
 Confirm Planet's imagery license before publishing or redistributing the map.
 
 ## Suggested notebook sequence
