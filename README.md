@@ -108,12 +108,34 @@ from the downloaded PlanetScope visual products:
 python scripts/create_planet_slider_map.py
 ```
 
+The default 8192-pixel display mosaics support detailed zooming. Use
+`--max-dimension 12000` or higher when more source detail is required and
+memory permits; browser-friendly PNGs are still display products rather than
+full-resolution analysis rasters.
+
 The default inputs are `planet/pre_event/planetscope-2026-05-27` and
 `planet/post_event/planetscope-2026-08-26`. Open
 `outputs/maps/planet_before_after/index.html` after the command finishes. The
 generated PNGs are display products; retain the original GeoTIFFs for analysis.
 The HTML and PNG overlays work offline without external web libraries.
 Confirm Planet's imagery license before publishing or redistributing the map.
+
+## Native-resolution PlanetScope mosaic
+
+Merge all August 28 PlanetScope visual tiles into a losslessly compressed,
+tiled native-resolution BigTIFF:
+
+```powershell
+python scripts/mosaic_planetscope_visual.py --overwrite
+```
+
+The default output is
+`data/processed/planet/planetscope_20260828_visual_mosaic.tif`, accompanied by
+a JSON provenance manifest. The script recursively matches
+`planet/post_event/planetscope-2026-08-28/items/20260828_*/*_visual.tif`, keeps
+the source CRS and finest native resolution, and processes the mosaic in
+memory-limited chunks. Use `--help` for custom dates, paths, overlap rules, and
+memory limits.
 
 ## Suggested notebook sequence
 

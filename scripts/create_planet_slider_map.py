@@ -91,7 +91,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-dimension",
         type=int,
-        default=4096,
+        default=8192,
         help="Maximum width or height of each display mosaic in pixels.",
     )
     parser.add_argument(
@@ -191,10 +191,22 @@ def write_html(
     pre_bounds: list[list[float]],
     post_bounds: list[list[float]],
 ) -> None:
-    all_south = min(pre_bounds[0][0], post_bounds[0][0])
-    all_west = min(pre_bounds[0][1], post_bounds[0][1])
-    all_north = max(pre_bounds[1][0], post_bounds[1][0])
-    all_east = max(pre_bounds[1][1], post_bounds[1][1])
+    # Start on the shared footprint instead of the union of both orbital
+    # swaths. A small inset keeps diagonal acquisition edges outside the
+    # initial viewport without rotating or corrupting north-up geometry.
+    all_south = max(pre_bounds[0][0], post_bounds[0][0])
+    all_west = max(pre_bounds[0][1], post_bounds[0][1])
+    all_north = min(pre_bounds[1][0], post_bounds[1][0])
+    all_east = min(pre_bounds[1][1], post_bounds[1][1])
+    if all_south >= all_north or all_west >= all_east:
+        raise ValueError("Pre- and post-event mosaics do not overlap")
+    inset = 0.15
+    latitude_padding = (all_north - all_south) * inset
+    longitude_padding = (all_east - all_west) * inset
+    all_south += latitude_padding
+    all_north -= latitude_padding
+    all_west += longitude_padding
+    all_east -= longitude_padding
     values = {
         "title": title,
         "preLabel": pre_label,
@@ -262,7 +274,7 @@ const divider=document.getElementById('divider'),scenes=document.querySelectorAl
 let split=.5,scale=1,tx=0,ty=0,mode=null,lastX=0,lastY=0;
 function render(){post.style.clipPath=`inset(0 ${(1-split)*100}% 0 0)`;
 divider.style.left=(split*100)+'%';scenes.forEach(s=>s.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`)}
-function zoomAt(factor,x=viewer.clientWidth/2,y=viewer.clientHeight/2){const next=Math.max(1,Math.min(12,scale*factor));
+function zoomAt(factor,x=viewer.clientWidth/2,y=viewer.clientHeight/2){const next=Math.max(1,Math.min(64,scale*factor));
 const ratio=next/scale;tx=x-(x-tx)*ratio;ty=y-(y-ty)*ratio;scale=next;if(scale===1){tx=0;ty=0}render()}
 viewer.addEventListener('wheel',e=>{e.preventDefault();const r=viewer.getBoundingClientRect();
 zoomAt(e.deltaY<0?1.25:.8,e.clientX-r.left,e.clientY-r.top)},{passive:false});
