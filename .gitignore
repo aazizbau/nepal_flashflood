@@ -26,6 +26,7 @@ htmlcov/
 Thumbs.db
 
 # Data and generated products (directory placeholders remain tracked)
+/assets/
 /planet/
 data/raw/**
 data/external/**

@@ -64,6 +64,7 @@ import rasterio  # noqa: E402  (PROJ environment must be configured first)
 from rasterio.enums import Resampling
 from rasterio.merge import merge
 from rasterio.transform import array_bounds
+from rasterio.vrt import WarpedVRT
 from rasterio.warp import calculate_default_transform, reproject
 
 LOG = logging.getLogger("planet-slider")
@@ -204,23 +205,37 @@ def make_aligned_overlays(
         raise ValueError("--max-dimension must be at least 256")
     all_paths = pre_paths + post_paths
     datasets = [rasterio.open(path) for path in all_paths]
+    warped_datasets: list[WarpedVRT] = []
     try:
         target_crs = datasets[0].crs
         if target_crs is None:
             raise ValueError(f"Missing CRS: {all_paths[0]}")
-        if any(dataset.crs != target_crs for dataset in datasets):
-            raise ValueError(
-                "Pre- and post-event inputs must share one projected CRS for "
-                "pixel-aligned comparison"
-            )
         if not target_crs.is_projected:
             raise ValueError("Inputs must use a projected CRS for undistorted top-down display")
+        if any(dataset.crs is None for dataset in datasets):
+            missing = all_paths[next(i for i, dataset in enumerate(datasets) if dataset.crs is None)]
+            raise ValueError(f"Missing CRS: {missing}")
         if any(dataset.count < 3 for dataset in datasets):
             raise ValueError("All inputs must contain at least three RGB bands")
 
+        aligned_datasets = []
+        for path, dataset in zip(all_paths, datasets):
+            if dataset.crs == target_crs:
+                aligned_datasets.append(dataset)
+            else:
+                LOG.info("Reprojecting %s from %s to %s for display alignment", path, dataset.crs, target_crs)
+                warped = WarpedVRT(
+                    dataset,
+                    crs=target_crs,
+                    resampling=Resampling.bilinear,
+                    nodata=0,
+                )
+                warped_datasets.append(warped)
+                aligned_datasets.append(warped)
+
         pre_count = len(pre_paths)
-        pre_sources = datasets[:pre_count]
-        post_sources = datasets[pre_count:]
+        pre_sources = aligned_datasets[:pre_count]
+        post_sources = aligned_datasets[pre_count:]
 
         def group_bounds(sources: list[rasterio.io.DatasetReader]) -> tuple[float, float, float, float]:
             return (
@@ -242,8 +257,8 @@ def make_aligned_overlays(
         if left >= right or bottom >= top:
             raise ValueError("Pre- and post-event inputs do not overlap")
 
-        native_x = min(abs(source.res[0]) for source in datasets)
-        native_y = min(abs(source.res[1]) for source in datasets)
+        native_x = min(abs(source.res[0]) for source in aligned_datasets)
+        native_y = min(abs(source.res[1]) for source in aligned_datasets)
         scale = max(
             (right - left) / native_x / max_dimension,
             (top - bottom) / native_y / max_dimension,
@@ -282,6 +297,8 @@ def make_aligned_overlays(
             Image.fromarray(rgba, mode="RGBA").save(destination, optimize=True)
             LOG.info("Wrote aligned %s overlay %s (%dx%d)", label, destination, width, height)
     finally:
+        for dataset in warped_datasets:
+            dataset.close()
         for dataset in datasets:
             dataset.close()
 

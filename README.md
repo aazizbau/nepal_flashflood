@@ -123,6 +123,8 @@ The HTML and PNG overlays work offline without external web libraries.
 Confirm Planet's imagery license before publishing or redistributing the map.
 Both dates are rendered on the same north-up projected grid and common extent,
 preventing independent browser stretching or apparent rotation between layers.
+When the input CRSs differ, the post-event image is reprojected in memory to
+the pre-event CRS for display alignment; source GeoTIFFs are not changed.
 
 ## Native-resolution PlanetScope mosaic
 
