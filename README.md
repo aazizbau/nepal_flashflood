@@ -108,10 +108,10 @@ from the downloaded PlanetScope visual products:
 python scripts/create_planet_slider_map.py
 ```
 
-The default 8192-pixel display mosaics support detailed zooming. Use
-`--max-dimension 12000` or higher when more source detail is required and
-memory permits; browser-friendly PNGs are still display products rather than
-full-resolution analysis rasters.
+The default 12000-pixel display mosaics support detailed zooming. Use a higher
+`--max-dimension` when more source detail is required and memory permits;
+browser-friendly PNGs are still display products rather than full-resolution
+analysis rasters.
 
 The default inputs are `assets/nepal_flashflood26.tif` for the pre-event image
 and `data/processed/planet/planetscope_20260828_visual_mosaic.tif` for the
@@ -121,6 +121,8 @@ post-event image. Each input can alternatively be a directory of
 generated PNGs are display products; retain the original GeoTIFFs for analysis.
 The HTML and PNG overlays work offline without external web libraries.
 Confirm Planet's imagery license before publishing or redistributing the map.
+Both dates are rendered on the same north-up projected grid and common extent,
+preventing independent browser stretching or apparent rotation between layers.
 
 ## Native-resolution PlanetScope mosaic
 

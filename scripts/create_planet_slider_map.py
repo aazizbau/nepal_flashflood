@@ -2,10 +2,10 @@
 """Create a movable before/after map from georeferenced RGB GeoTIFFs.
 
 Each input may be one GeoTIFF or a directory containing ``*_visual.tif`` tiles.
-The script builds a reduced-resolution RGB mosaic for each date, reprojects the
-mosaics to WGS 84, and writes PNG overlays plus a self-contained HTML viewer
-with a draggable swipe divider, synchronized pan, and zoom. Source GeoTIFFs are
-read only and never modified.
+The script builds both RGB overlays on one shared north-up projected grid and
+common extent, then writes a self-contained HTML viewer with a draggable swipe
+divider, synchronized pan, and zoom. Source GeoTIFFs are read only and never
+modified.
 
 The PNGs are intentionally display products, not analysis rasters. Use the
 original analytic surface-reflectance products for quantitative change
@@ -96,7 +96,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-dimension",
         type=int,
-        default=8192,
+        default=12000,
         help="Maximum width or height of each display mosaic in pixels.",
     )
     parser.add_argument(
@@ -192,6 +192,103 @@ def make_overlay(paths: list[Path], destination: Path, max_dimension: int) -> li
     return [[south, west], [north, east]]
 
 
+def make_aligned_overlays(
+    pre_paths: list[Path],
+    post_paths: list[Path],
+    pre_destination: Path,
+    post_destination: Path,
+    max_dimension: int,
+) -> tuple[list[list[float]], list[list[float]]]:
+    """Render both dates on the same north-up projected pixel grid."""
+    if max_dimension < 256:
+        raise ValueError("--max-dimension must be at least 256")
+    all_paths = pre_paths + post_paths
+    datasets = [rasterio.open(path) for path in all_paths]
+    try:
+        target_crs = datasets[0].crs
+        if target_crs is None:
+            raise ValueError(f"Missing CRS: {all_paths[0]}")
+        if any(dataset.crs != target_crs for dataset in datasets):
+            raise ValueError(
+                "Pre- and post-event inputs must share one projected CRS for "
+                "pixel-aligned comparison"
+            )
+        if not target_crs.is_projected:
+            raise ValueError("Inputs must use a projected CRS for undistorted top-down display")
+        if any(dataset.count < 3 for dataset in datasets):
+            raise ValueError("All inputs must contain at least three RGB bands")
+
+        pre_count = len(pre_paths)
+        pre_sources = datasets[:pre_count]
+        post_sources = datasets[pre_count:]
+
+        def group_bounds(sources: list[rasterio.io.DatasetReader]) -> tuple[float, float, float, float]:
+            return (
+                min(source.bounds.left for source in sources),
+                min(source.bounds.bottom for source in sources),
+                max(source.bounds.right for source in sources),
+                max(source.bounds.top for source in sources),
+            )
+
+        pre_extent = group_bounds(pre_sources)
+        post_extent = group_bounds(post_sources)
+        common_bounds = (
+            max(pre_extent[0], post_extent[0]),
+            max(pre_extent[1], post_extent[1]),
+            min(pre_extent[2], post_extent[2]),
+            min(pre_extent[3], post_extent[3]),
+        )
+        left, bottom, right, top = common_bounds
+        if left >= right or bottom >= top:
+            raise ValueError("Pre- and post-event inputs do not overlap")
+
+        native_x = min(abs(source.res[0]) for source in datasets)
+        native_y = min(abs(source.res[1]) for source in datasets)
+        scale = max(
+            (right - left) / native_x / max_dimension,
+            (top - bottom) / native_y / max_dimension,
+            1.0,
+        )
+        resolution = (native_x * scale, native_y * scale)
+        LOG.info(
+            "Rendering shared %s grid at %.3f x %.3f units/pixel (%.2f x native)",
+            target_crs,
+            resolution[0],
+            resolution[1],
+            scale,
+        )
+
+        output_shape: tuple[int, int] | None = None
+        for label, sources, destination in (
+            ("pre-event", pre_sources, pre_destination),
+            ("post-event", post_sources, post_destination),
+        ):
+            mosaic, _ = merge(
+                sources,
+                bounds=common_bounds,
+                indexes=[1, 2, 3],
+                res=resolution,
+                nodata=0,
+                method="first",
+                target_aligned_pixels=True,
+            )
+            height, width = mosaic.shape[1:]
+            if output_shape is None:
+                output_shape = (height, width)
+            elif output_shape != (height, width):
+                raise RuntimeError("Aligned pre/post output dimensions unexpectedly differ")
+            alpha = np.where(np.any(mosaic != 0, axis=0), 255, 0).astype(np.uint8)
+            rgba = np.dstack((np.moveaxis(mosaic.astype(np.uint8), 0, -1), alpha))
+            Image.fromarray(rgba, mode="RGBA").save(destination, optimize=True)
+            LOG.info("Wrote aligned %s overlay %s (%dx%d)", label, destination, width, height)
+    finally:
+        for dataset in datasets:
+            dataset.close()
+
+    normalized = [[0.0, 0.0], [1.0, 1.0]]
+    return normalized, normalized
+
+
 def write_html(
     destination: Path,
     title: str,
@@ -209,7 +306,7 @@ def write_html(
     all_east = min(pre_bounds[1][1], post_bounds[1][1])
     if all_south >= all_north or all_west >= all_east:
         raise ValueError("Pre- and post-event mosaics do not overlap")
-    inset = 0.15
+    inset = 0.0
     latitude_padding = (all_north - all_south) * inset
     longitude_padding = (all_east - all_west) * inset
     all_south += latitude_padding
@@ -234,7 +331,7 @@ body{font-family:system-ui,sans-serif;background:#182028;overflow:hidden}
 #viewer{position:relative;background:linear-gradient(135deg,#25313b,#12181e);touch-action:none}
 .layer{position:absolute;inset:0;overflow:hidden}.scene{position:absolute;inset:0;
 transform-origin:0 0;will-change:transform}.layer img{position:absolute;display:block;
-user-select:none;-webkit-user-drag:none}
+user-select:none;-webkit-user-drag:none;object-fit:contain}
 #post-layer{clip-path:inset(0 0 0 50%)}
 .title{position:absolute;z-index:5;top:12px;left:50%;transform:translateX(-50%);
 background:#fffffff0;padding:8px 14px;border-radius:6px;box-shadow:0 1px 5px #0006;
@@ -308,8 +405,13 @@ def main() -> None:
     post_paths = discover(args.post_input)
     args.output.mkdir(parents=True, exist_ok=True)
     LOG.info("Found %d pre-event and %d post-event scenes", len(pre_paths), len(post_paths))
-    pre_bounds = make_overlay(pre_paths, args.output / "pre_event.png", args.max_dimension)
-    post_bounds = make_overlay(post_paths, args.output / "post_event.png", args.max_dimension)
+    pre_bounds, post_bounds = make_aligned_overlays(
+        pre_paths,
+        post_paths,
+        args.output / "pre_event.png",
+        args.output / "post_event.png",
+        args.max_dimension,
+    )
     write_html(
         args.output / "index.html",
         args.title,
