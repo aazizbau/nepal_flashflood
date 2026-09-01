@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Create a movable before/after map from PlanetScope visual GeoTIFFs.
+"""Create a movable before/after map from georeferenced RGB GeoTIFFs.
 
-The script discovers every ``*_visual.tif`` below the pre- and post-event
-directories, builds a reduced-resolution RGB mosaic for each date, reprojects
-the mosaics to WGS 84, and writes PNG overlays plus a Leaflet HTML map with a
-draggable swipe divider. Source GeoTIFFs are read only and never modified.
+Each input may be one GeoTIFF or a directory containing ``*_visual.tif`` tiles.
+The script builds a reduced-resolution RGB mosaic for each date, reprojects the
+mosaics to WGS 84, and writes PNG overlays plus a self-contained HTML viewer
+with a draggable swipe divider, synchronized pan, and zoom. Source GeoTIFFs are
+read only and never modified.
 
 The PNGs are intentionally display products, not analysis rasters. Use the
 original analytic surface-reflectance products for quantitative change
@@ -18,14 +19,14 @@ Default PowerShell usage from the repository root::
 Explicit paths and a larger display mosaic::
 
     python scripts/create_planet_slider_map.py `
-      --pre-dir planet/pre_event/planetscope-2026-05-27 `
-      --post-dir planet/post_event/planetscope-2026-08-26 `
+      --pre-input assets/nepal_flashflood26.tif `
+      --post-input data/processed/planet/planetscope_20260828_visual_mosaic.tif `
       --output outputs/maps/planet_before_after `
       --max-dimension 6000 `
       --title "Nepal flash flood: PlanetScope before/after"
 
-Open ``outputs/maps/planet_before_after/index.html`` in a browser. The page
-viewer and Planet PNG overlays are local and work without internet access.
+Open ``outputs/maps/planet_before_after/index.html`` in a browser. The viewer
+and Planet PNG overlays are local and work without internet access.
 """
 
 from __future__ import annotations
@@ -71,16 +72,20 @@ LOG = logging.getLogger("planet-slider")
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        "--pre-input",
         "--pre-dir",
+        dest="pre_input",
         type=Path,
-        default=Path("planet/pre_event/planetscope-2026-05-27"),
-        help="Directory searched recursively for pre-event *_visual.tif files.",
+        default=Path("assets/nepal_flashflood26.tif"),
+        help="Pre-event GeoTIFF, or directory searched recursively for *_visual.tif files.",
     )
     parser.add_argument(
+        "--post-input",
         "--post-dir",
+        dest="post_input",
         type=Path,
-        default=Path("planet/post_event/planetscope-2026-08-26"),
-        help="Directory searched recursively for post-event *_visual.tif files.",
+        default=Path("data/processed/planet/planetscope_20260828_visual_mosaic.tif"),
+        help="Post-event GeoTIFF, or directory searched recursively for *_visual.tif files.",
     )
     parser.add_argument(
         "--output",
@@ -99,17 +104,21 @@ def parse_args() -> argparse.Namespace:
         default="Nepal flash flood: PlanetScope before/after",
         help="Map title shown in the browser.",
     )
-    parser.add_argument("--pre-label", default="Pre-event · 27 May 2026")
-    parser.add_argument("--post-label", default="Post-event · 26 August 2026")
+    parser.add_argument("--pre-label", default="Pre-event")
+    parser.add_argument("--post-label", default="Post-event · 28 August 2026")
     return parser.parse_args()
 
 
-def discover(directory: Path) -> list[Path]:
-    if not directory.is_dir():
-        raise FileNotFoundError(f"Imagery directory does not exist: {directory}")
-    paths = sorted(directory.rglob("*_visual.tif"))
+def discover(input_path: Path) -> list[Path]:
+    if input_path.is_file():
+        if input_path.suffix.lower() not in {".tif", ".tiff"}:
+            raise ValueError(f"Input file must be a GeoTIFF: {input_path}")
+        return [input_path]
+    if not input_path.is_dir():
+        raise FileNotFoundError(f"Imagery input does not exist: {input_path}")
+    paths = sorted(input_path.rglob("*_visual.tif"))
     if not paths:
-        raise FileNotFoundError(f"No *_visual.tif files found below {directory}")
+        raise FileNotFoundError(f"No *_visual.tif files found below {input_path}")
     return paths
 
 
@@ -226,7 +235,7 @@ body{font-family:system-ui,sans-serif;background:#182028;overflow:hidden}
 .layer{position:absolute;inset:0;overflow:hidden}.scene{position:absolute;inset:0;
 transform-origin:0 0;will-change:transform}.layer img{position:absolute;display:block;
 user-select:none;-webkit-user-drag:none}
-#post-layer{clip-path:inset(0 50% 0 0)}
+#post-layer{clip-path:inset(0 0 0 50%)}
 .title{position:absolute;z-index:5;top:12px;left:50%;transform:translateX(-50%);
 background:#fffffff0;padding:8px 14px;border-radius:6px;box-shadow:0 1px 5px #0006;
 font-weight:650;text-align:center;pointer-events:none;white-space:nowrap}
@@ -272,7 +281,7 @@ addRaster('post-layer','post_event.png',cfg.postBounds);
 const viewer=document.getElementById('viewer'),post=document.getElementById('post-layer');
 const divider=document.getElementById('divider'),scenes=document.querySelectorAll('.scene');
 let split=.5,scale=1,tx=0,ty=0,mode=null,lastX=0,lastY=0;
-function render(){post.style.clipPath=`inset(0 ${(1-split)*100}% 0 0)`;
+function render(){post.style.clipPath=`inset(0 0 0 ${split*100}%)`;
 divider.style.left=(split*100)+'%';scenes.forEach(s=>s.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`)}
 function zoomAt(factor,x=viewer.clientWidth/2,y=viewer.clientHeight/2){const next=Math.max(1,Math.min(64,scale*factor));
 const ratio=next/scale;tx=x-(x-tx)*ratio;ty=y-(y-ty)*ratio;scale=next;if(scale===1){tx=0;ty=0}render()}
@@ -295,8 +304,8 @@ def main() -> None:
     args = parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     LOG.info("Using PROJ data directory: %s", _PROJ_DATA)
-    pre_paths = discover(args.pre_dir)
-    post_paths = discover(args.post_dir)
+    pre_paths = discover(args.pre_input)
+    post_paths = discover(args.post_input)
     args.output.mkdir(parents=True, exist_ok=True)
     LOG.info("Found %d pre-event and %d post-event scenes", len(pre_paths), len(post_paths))
     pre_bounds = make_overlay(pre_paths, args.output / "pre_event.png", args.max_dimension)

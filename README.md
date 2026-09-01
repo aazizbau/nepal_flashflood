@@ -113,8 +113,10 @@ The default 8192-pixel display mosaics support detailed zooming. Use
 memory permits; browser-friendly PNGs are still display products rather than
 full-resolution analysis rasters.
 
-The default inputs are `planet/pre_event/planetscope-2026-05-27` and
-`planet/post_event/planetscope-2026-08-26`. Open
+The default inputs are `assets/nepal_flashflood26.tif` for the pre-event image
+and `data/processed/planet/planetscope_20260828_visual_mosaic.tif` for the
+post-event image. Each input can alternatively be a directory of
+`*_visual.tif` tiles using `--pre-input` and `--post-input`. Open
 `outputs/maps/planet_before_after/index.html` after the command finishes. The
 generated PNGs are display products; retain the original GeoTIFFs for analysis.
 The HTML and PNG overlays work offline without external web libraries.
