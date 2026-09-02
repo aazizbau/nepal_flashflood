@@ -60,7 +60,7 @@ from pathlib import Path
 import ee
 import requests
 from dotenv import load_dotenv
-from pyproj import Transformer, datadir as pyproj_datadir
+from pyproj import datadir as pyproj_datadir
 
 # Windows geospatial wheels may not automatically agree on a PROJ data path.
 # Prefer Rasterio's matching database, then fall back to pyproj's, before GDAL
@@ -84,8 +84,7 @@ import rasterio  # noqa: E402
 from rasterio.enums import Resampling
 from rasterio.transform import Affine
 from rasterio.windows import Window
-from shapely.geometry import box, mapping
-from shapely.ops import transform as transform_geometry
+from shapely.geometry import mapping
 
 LOGGER = logging.getLogger("aw3d30-gee")
 
@@ -255,7 +254,6 @@ def main(argv: list[str] | None = None) -> int:
     if destination.exists() and not args.overwrite:
         raise FileExistsError(f"{destination} exists; use --overwrite to replace it")
 
-    to_wgs84 = Transformer.from_crs(args.crs, "EPSG:4326", always_xy=True).transform
     tile_folder = args.output / "tiles"
     tile_folder.mkdir(parents=True, exist_ok=True)
     profile = {
@@ -286,15 +284,12 @@ def main(argv: list[str] | None = None) -> int:
             for index, window in enumerate(planned_windows, start=1):
                 window = window.round_offsets().round_lengths()
                 tile_transform = rasterio.windows.transform(window, transform)
-                west, south, east, north = rasterio.windows.bounds(window, transform)
-                tile_region = mapping(transform_geometry(to_wgs84, box(west, south, east, north)))
                 tile_path = tile_folder / f"aw3d30_{index:04d}.tif"
                 LOGGER.info("Downloading chunk %d/%d", index, len(planned_windows))
                 url = image.getDownloadURL(
                     {
                         "name": tile_path.stem,
                         "bands": [BAND],
-                        "region": tile_region,
                         "crs": args.crs,
                         "crs_transform": list(tile_transform)[:6],
                         "dimensions": [int(window.width), int(window.height)],
