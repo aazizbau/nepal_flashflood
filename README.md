@@ -143,6 +143,26 @@ the source CRS and finest native resolution, and processes the mosaic in
 memory-limited chunks. Use `--help` for custom dates, paths, overlap rules, and
 memory limits.
 
+## ALOS World 3D (AW3D30) DSM mosaic
+
+Preview and then download a single clipped AW3D30 v4.1 DSM GeoTIFF for the
+expanded Rasuwa–Langtang–Gyirong flood AOI:
+
+```powershell
+python scripts/download_aw3d30_gee.py
+python scripts/download_aw3d30_gee.py --download
+```
+
+The default AOI is
+`assets/nepal_rasuwa_langtang_gyirong_flood_2026_expanded_AOI_single_layer.gpkg`.
+The script downloads exact 2048-pixel Earth Engine chunks and writes them into
+one aligned, clipped, compressed mosaic at
+`data/external/dem/aw3d30/aw3d30_v4_1_dsm_mosaic.tif`. Set `EE_PROJECT` or pass
+`--project`. AW3D30 is a DSM rather than a bare-earth terrain model; consult
+the [official Earth Engine catalog](https://developers.google.com/earth-engine/datasets/catalog/JAXA_ALOS_AW3D30_V4_1)
+and [JAXA dataset page](https://www.eorc.jaxa.jp/ALOS/en/dataset/aw3d30/aw3d30_e.htm)
+for quality limitations, attribution, and terms.
+
 ## Suggested notebook sequence
 
 1. `01_event_context.ipynb` — sources, timeline, AOI, and hypotheses
