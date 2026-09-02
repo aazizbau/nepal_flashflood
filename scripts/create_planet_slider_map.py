@@ -102,7 +102,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--title",
-        default="Nepal flash flood: PlanetScope before/after",
+        default="Nepal-Tibet Flash Flood 26 August 2026",
         help="Map title shown in the browser.",
     )
     parser.add_argument("--pre-label", default="Pre-event")
@@ -350,12 +350,16 @@ body{font-family:system-ui,sans-serif;background:#182028;overflow:hidden}
 transform-origin:0 0;will-change:transform}.layer img{position:absolute;display:block;
 user-select:none;-webkit-user-drag:none;object-fit:contain}
 #post-layer{clip-path:inset(0 0 0 50%)}
-.title{position:absolute;z-index:5;top:12px;left:50%;transform:translateX(-50%);
+.title{position:absolute;z-index:5;top:14px;left:50%;transform:translateX(-50%);
 background:#fffffff0;padding:8px 14px;border-radius:6px;box-shadow:0 1px 5px #0006;
-font-weight:650;text-align:center;pointer-events:none;white-space:nowrap}
-.labels{position:absolute;z-index:5;bottom:22px;left:0;right:0;display:flex;
-justify-content:space-between;padding:0 24px;pointer-events:none}
-.labels span{background:#111d;color:white;padding:6px 10px;border-radius:4px}
+font-size:clamp(22px,2vw,34px);font-weight:750;text-align:center;pointer-events:none;white-space:nowrap}
+.labels{position:absolute;z-index:5;top:82px;left:0;right:0;display:grid;
+grid-template-columns:1fr 1fr;pointer-events:none}
+.labels span{justify-self:center;background:#111d;color:white;padding:8px 14px;border-radius:5px;
+font-size:clamp(17px,1.35vw,23px);font-weight:700;box-shadow:0 1px 5px #0007}
+.credits{position:absolute;z-index:5;right:16px;bottom:16px;background:#111d;color:#fff;
+padding:9px 12px;border-radius:5px;font-size:14px;line-height:1.45;text-align:left;
+box-shadow:0 1px 5px #0007;pointer-events:none}
 #divider{position:absolute;z-index:4;top:0;bottom:0;left:50%;width:3px;
 background:#fff;box-shadow:0 0 5px #000;pointer-events:none}
 #divider::after{content:'↔';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
@@ -375,6 +379,8 @@ font-size:13px}.controls button:hover{background:#eee}
 <button id="zoom-out" title="Zoom out">−</button><button id="reset" title="Reset view">1:1</button></div>
 <div class="title"></div><div class="hint">Wheel: zoom · Drag: pan · Drag divider: compare</div>
 <div class="labels"><span id="pre-label"></span><span id="post-label"></span></div>
+<div class="credits">Developed by: Remote Sensing Nasahara Lab<br>
+Data source: PlanetScope, OpenStreetMap</div>
 </div><script>
 const cfg=__CONFIG__;
 document.querySelector('.title').textContent=cfg.title;
