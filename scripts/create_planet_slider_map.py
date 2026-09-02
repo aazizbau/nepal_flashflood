@@ -36,12 +36,17 @@ import html
 import importlib.util
 import json
 import logging
+import math
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
+from pyproj import CRS, Transformer
 from pyproj import datadir as pyproj_datadir
+from shapely.geometry import GeometryCollection, LineString, MultiLineString, MultiPolygon, Polygon
+from shapely.ops import transform as transform_geometry
 
 # On Windows, rasterio and pyproj wheels can use different packaged PROJ data
 # locations. Prefer rasterio's matching database, then fall back to pyproj's,
@@ -60,10 +65,11 @@ os.environ["PROJ_DATA"] = str(_PROJ_DATA)
 os.environ["PROJ_LIB"] = str(_PROJ_DATA)  # compatibility with older PROJ/GDAL
 os.environ.setdefault("GTIFF_SRS_SOURCE", "EPSG")
 
-import rasterio  # noqa: E402  (PROJ environment must be configured first)
+import geopandas as gpd  # noqa: E402  (PROJ environment must be configured first)
+import rasterio  # noqa: E402
 from rasterio.enums import Resampling
 from rasterio.merge import merge
-from rasterio.transform import array_bounds
+from rasterio.transform import Affine, array_bounds
 from rasterio.vrt import WarpedVRT
 from rasterio.warp import calculate_default_transform, reproject
 
@@ -107,6 +113,25 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--pre-label", default="Pre-event")
     parser.add_argument("--post-label", default="Post-event · 28 August 2026")
+    parser.add_argument(
+        "--flood-polygon",
+        type=Path,
+        default=Path("assets/nepal_flooded_river.gpkg"),
+        help="Flood polygon drawn as a thin yellow outline on the post-event side.",
+    )
+    parser.add_argument(
+        "--glacier-lines",
+        type=Path,
+        default=Path("assets/nepal_flood_falling_glacier.gpkg"),
+        help="GeoPackage containing width and length line layers.",
+    )
+    parser.add_argument(
+        "--dsm",
+        type=Path,
+        default=Path("data/external/dem/aw3d30/aw3d30_v4_1_dsm_mosaic.tif"),
+        help="DSM used to calculate terrain-following glacier length.",
+    )
+    parser.add_argument("--no-annotations", action="store_true", help="Do not add flood/glacier vectors.")
     return parser.parse_args()
 
 
@@ -199,7 +224,7 @@ def make_aligned_overlays(
     pre_destination: Path,
     post_destination: Path,
     max_dimension: int,
-) -> tuple[list[list[float]], list[list[float]]]:
+) -> tuple[list[list[float]], list[list[float]], dict]:
     """Render both dates on the same north-up projected pixel grid."""
     if max_dimension < 256:
         raise ValueError("--max-dimension must be at least 256")
@@ -274,11 +299,12 @@ def make_aligned_overlays(
         )
 
         output_shape: tuple[int, int] | None = None
+        output_transform = None
         for label, sources, destination in (
             ("pre-event", pre_sources, pre_destination),
             ("post-event", post_sources, post_destination),
         ):
-            mosaic, _ = merge(
+            mosaic, mosaic_transform = merge(
                 sources,
                 bounds=common_bounds,
                 indexes=[1, 2, 3],
@@ -290,6 +316,7 @@ def make_aligned_overlays(
             height, width = mosaic.shape[1:]
             if output_shape is None:
                 output_shape = (height, width)
+                output_transform = mosaic_transform
             elif output_shape != (height, width):
                 raise RuntimeError("Aligned pre/post output dimensions unexpectedly differ")
             alpha = np.where(np.any(mosaic != 0, axis=0), 255, 0).astype(np.uint8)
@@ -303,7 +330,173 @@ def make_aligned_overlays(
             dataset.close()
 
     normalized = [[0.0, 0.0], [1.0, 1.0]]
-    return normalized, normalized
+    assert output_shape is not None and output_transform is not None
+    grid = {
+        "crs": target_crs,
+        "transform": output_transform,
+        "height": output_shape[0],
+        "width": output_shape[1],
+    }
+    return normalized, normalized, grid
+
+
+def geometry_to_svg_path(geometry, transform: Affine) -> str:
+    """Convert projected vector geometry to output-grid SVG path commands."""
+    inverse = ~transform
+
+    def point(value) -> tuple[float, float]:
+        x, y = inverse * (value[0], value[1])
+        return float(x), float(y)
+
+    def line_path(line: LineString, close: bool = False) -> str:
+        coordinates = list(line.coords)
+        if not coordinates:
+            return ""
+        pixels = [point(coordinate) for coordinate in coordinates]
+        command = "M " + " L ".join(f"{x:.2f} {y:.2f}" for x, y in pixels)
+        return command + (" Z" if close else "")
+
+    if geometry is None or geometry.is_empty:
+        return ""
+    if isinstance(geometry, LineString):
+        return line_path(geometry)
+    if isinstance(geometry, MultiLineString):
+        return " ".join(line_path(part) for part in geometry.geoms)
+    if isinstance(geometry, Polygon):
+        paths = [line_path(LineString(geometry.exterior.coords), close=True)]
+        paths.extend(line_path(LineString(ring.coords), close=True) for ring in geometry.interiors)
+        return " ".join(paths)
+    if isinstance(geometry, MultiPolygon):
+        return " ".join(geometry_to_svg_path(part, transform) for part in geometry.geoms)
+    if isinstance(geometry, GeometryCollection):
+        return " ".join(geometry_to_svg_path(part, transform) for part in geometry.geoms)
+    raise ValueError(f"Unsupported annotation geometry type: {geometry.geom_type}")
+
+
+def line_parts(geometry) -> list[LineString]:
+    if isinstance(geometry, LineString):
+        return [geometry]
+    if isinstance(geometry, MultiLineString):
+        return list(geometry.geoms)
+    if isinstance(geometry, GeometryCollection):
+        return [part for item in geometry.geoms for part in line_parts(item)]
+    return []
+
+
+def terrain_length_metres(geometry, geometry_crs, dsm: rasterio.io.DatasetReader) -> float:
+    """Calculate polyline 3D length after sampling elevations along the DSM."""
+    transformer = Transformer.from_crs(geometry_crs, dsm.crs, always_xy=True)
+    projected = transform_geometry(transformer.transform, geometry)
+    unit_factor = CRS.from_user_input(dsm.crs).axis_info[0].unit_conversion_factor
+    step = max(abs(dsm.res[0]), abs(dsm.res[1]))
+    total = 0.0
+    for part in line_parts(projected):
+        horizontal_length = part.length
+        if horizontal_length <= 0:
+            continue
+        sample_count = max(2, math.ceil(horizontal_length / step) + 1)
+        distances = np.linspace(0.0, horizontal_length, sample_count)
+        points = [part.interpolate(float(distance)) for distance in distances]
+        elevations = np.array([value[0] for value in dsm.sample([(p.x, p.y) for p in points])], dtype=float)
+        valid = np.isfinite(elevations)
+        if dsm.nodata is not None:
+            valid &= elevations != dsm.nodata
+        for index in range(1, sample_count):
+            horizontal = (distances[index] - distances[index - 1]) * unit_factor
+            if valid[index - 1] and valid[index]:
+                vertical = elevations[index] - elevations[index - 1]
+                total += math.hypot(horizontal, vertical)
+            else:
+                total += horizontal
+    return total
+
+
+def write_post_annotations(
+    destination: Path,
+    measurements_path: Path,
+    grid: dict,
+    flood_polygon_path: Path,
+    glacier_lines_path: Path,
+    dsm_path: Path,
+) -> None:
+    """Write a transparent SVG overlay and measurement provenance JSON."""
+    for path in (flood_polygon_path, glacier_lines_path, dsm_path):
+        if not path.is_file():
+            raise FileNotFoundError(f"Annotation input does not exist: {path}")
+    target_crs = grid["crs"]
+    transform = grid["transform"]
+    width, height = grid["width"], grid["height"]
+    flood = gpd.read_file(flood_polygon_path).to_crs(target_crs)
+    width_lines = gpd.read_file(glacier_lines_path, layer="width").to_crs(target_crs)
+    length_lines = gpd.read_file(glacier_lines_path, layer="length")
+    if flood.empty or width_lines.empty or length_lines.empty:
+        raise ValueError("Flood polygon, width layer, and length layer must each contain features")
+
+    unit_factor = CRS.from_user_input(target_crs).axis_info[0].unit_conversion_factor
+    elements = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
+        'preserveAspectRatio="xMidYMid meet">',
+        '<g fill="none" stroke="#ffff00" stroke-width="2" vector-effect="non-scaling-stroke">',
+    ]
+    for geometry in flood.geometry:
+        elements.append(f'<path d="{geometry_to_svg_path(geometry, transform)}"/>')
+    elements.append("</g>")
+
+    measurements = {"width": [], "terrain_following_length": []}
+    label_size = max(22, round(max(width, height) / 260))
+    with rasterio.open(dsm_path) as dsm:
+        if dsm.crs is None:
+            raise ValueError(f"DSM has no CRS: {dsm_path}")
+        for layer_name, frame, color in (
+            ("width", width_lines, "#00ffff"),
+            ("length", length_lines.to_crs(target_crs), "#ff8c00"),
+        ):
+            elements.append(
+                f'<g fill="none" stroke="{color}" stroke-width="3" vector-effect="non-scaling-stroke">'
+            )
+            for feature_index, geometry in frame.geometry.items():
+                if geometry is None or geometry.is_empty:
+                    continue
+                if layer_name == "width":
+                    measured = geometry.length * unit_factor
+                    key = "width"
+                    method = "planar projected length"
+                else:
+                    original_geometry = length_lines.loc[feature_index].geometry
+                    measured = terrain_length_metres(original_geometry, length_lines.crs, dsm)
+                    key = "terrain_following_length"
+                    method = "3D length from AW3D30 DSM samples"
+                elements.append(f'<path d="{geometry_to_svg_path(geometry, transform)}"/>')
+                midpoint = geometry.interpolate(0.5, normalized=True)
+                column, row = (~transform) * (midpoint.x, midpoint.y)
+                label = (
+                    f'Width: {measured:,.1f} m'
+                    if layer_name == "width"
+                    else f'Slope length: {measured:,.1f} m'
+                )
+                elements.append(
+                    f'<text x="{column:.2f}" y="{row:.2f}" fill="{color}" stroke="#000" '
+                    f'stroke-width="4" paint-order="stroke" font-family="Arial,sans-serif" '
+                    f'font-size="{label_size}" font-weight="700" text-anchor="middle">{label}</text>'
+                )
+                measurements[key].append(
+                    {"feature_index": str(feature_index), "length_m": measured, "method": method}
+                )
+            elements.append("</g>")
+    elements.append("</svg>")
+    destination.write_text("\n".join(elements), encoding="utf-8")
+    measurements.update(
+        {
+            "created_utc": datetime.now(timezone.utc).isoformat(),
+            "flood_polygon": str(flood_polygon_path),
+            "glacier_lines": str(glacier_lines_path),
+            "dsm": str(dsm_path),
+            "display_crs": target_crs.to_string(),
+        }
+    )
+    measurements_path.write_text(json.dumps(measurements, indent=2), encoding="utf-8")
+    LOG.info("Wrote post-event vector overlay: %s", destination)
+    LOG.info("Wrote vector measurements: %s", measurements_path)
 
 
 def write_html(
@@ -313,6 +506,7 @@ def write_html(
     post_label: str,
     pre_bounds: list[list[float]],
     post_bounds: list[list[float]],
+    annotations: bool,
 ) -> None:
     # Start on the shared footprint instead of the union of both orbital
     # swaths. A small inset keeps diagonal acquisition edges outside the
@@ -337,6 +531,7 @@ def write_html(
         "preBounds": pre_bounds,
         "postBounds": post_bounds,
         "allBounds": [[all_south, all_west], [all_north, all_east]],
+        "annotations": annotations,
     }
     config = json.dumps(values, ensure_ascii=False).replace("</", "<\\/")
     document = """<!doctype html>
@@ -398,6 +593,7 @@ function addRaster(layerId,src,bounds){
 }
 addRaster('pre-layer','pre_event.png',cfg.preBounds);
 addRaster('post-layer','post_event.png',cfg.postBounds);
+if(cfg.annotations)addRaster('post-layer','post_annotations.svg',cfg.postBounds);
 const viewer=document.getElementById('viewer'),post=document.getElementById('post-layer');
 const divider=document.getElementById('divider'),scenes=document.querySelectorAll('.scene');
 let split=.5,scale=1,tx=0,ty=0,mode=null,lastX=0,lastY=0;
@@ -428,13 +624,27 @@ def main() -> None:
     post_paths = discover(args.post_input)
     args.output.mkdir(parents=True, exist_ok=True)
     LOG.info("Found %d pre-event and %d post-event scenes", len(pre_paths), len(post_paths))
-    pre_bounds, post_bounds = make_aligned_overlays(
+    pre_bounds, post_bounds, grid = make_aligned_overlays(
         pre_paths,
         post_paths,
         args.output / "pre_event.png",
         args.output / "post_event.png",
         args.max_dimension,
     )
+    annotation_path = args.output / "post_annotations.svg"
+    measurements_path = args.output / "post_annotation_measurements.json"
+    if args.no_annotations:
+        annotation_path.unlink(missing_ok=True)
+        measurements_path.unlink(missing_ok=True)
+    else:
+        write_post_annotations(
+            annotation_path,
+            measurements_path,
+            grid,
+            args.flood_polygon,
+            args.glacier_lines,
+            args.dsm,
+        )
     write_html(
         args.output / "index.html",
         args.title,
@@ -442,6 +652,7 @@ def main() -> None:
         args.post_label,
         pre_bounds,
         post_bounds,
+        not args.no_annotations,
     )
     LOG.info("Slider map ready: %s", (args.output / "index.html").resolve())
 

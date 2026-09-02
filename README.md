@@ -126,6 +126,15 @@ preventing independent browser stretching or apparent rotation between layers.
 When the input CRSs differ, the post-event image is reprojected in memory to
 the pre-event CRS for display alignment; source GeoTIFFs are not changed.
 
+By default, the post-event side also displays the flood boundary from
+`assets/nepal_flooded_river.gpkg`, the `width` and `length` layers from
+`assets/nepal_flood_falling_glacier.gpkg`, and measurement labels. Width is
+calculated in the projected map CRS. Glacier length is calculated as a
+terrain-following 3D distance by sampling
+`data/external/dem/aw3d30/aw3d30_v4_1_dsm_mosaic.tif`. Results and methods are
+recorded in `post_annotation_measurements.json`. Use `--no-annotations` to
+generate imagery only.
+
 ## Native-resolution PlanetScope mosaic
 
 Merge all August 28 PlanetScope visual tiles into a losslessly compressed,
