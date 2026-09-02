@@ -133,7 +133,9 @@ calculated in the projected map CRS. Glacier length is calculated as a
 terrain-following 3D distance by sampling
 `data/external/dem/aw3d30/aw3d30_v4_1_dsm_mosaic.tif`. Results and methods are
 recorded in `post_annotation_measurements.json`. Use `--no-annotations` to
-generate imagery only.
+generate imagery only. After editing annotation vectors, use
+`--annotations-only` to reuse existing PNG overlays and quickly rebuild the
+SVG, measurements, and HTML.
 
 ## Native-resolution PlanetScope mosaic
 

@@ -132,6 +132,11 @@ def parse_args() -> argparse.Namespace:
         help="DSM used to calculate terrain-following glacier length.",
     )
     parser.add_argument("--no-annotations", action="store_true", help="Do not add flood/glacier vectors.")
+    parser.add_argument(
+        "--annotations-only",
+        action="store_true",
+        help="Reuse existing PNG overlays and rebuild only annotations and HTML.",
+    )
     return parser.parse_args()
 
 
@@ -224,6 +229,7 @@ def make_aligned_overlays(
     pre_destination: Path,
     post_destination: Path,
     max_dimension: int,
+    render_images: bool = True,
 ) -> tuple[list[list[float]], list[list[float]], dict]:
     """Render both dates on the same north-up projected pixel grid."""
     if max_dimension < 256:
@@ -290,6 +296,15 @@ def make_aligned_overlays(
             1.0,
         )
         resolution = (native_x * scale, native_y * scale)
+        aligned_left = math.floor(left / resolution[0]) * resolution[0]
+        aligned_bottom = math.floor(bottom / resolution[1]) * resolution[1]
+        aligned_right = math.ceil(right / resolution[0]) * resolution[0]
+        aligned_top = math.ceil(top / resolution[1]) * resolution[1]
+        output_width = int(round((aligned_right - aligned_left) / resolution[0]))
+        output_height = int(round((aligned_top - aligned_bottom) / resolution[1]))
+        output_transform = Affine(
+            resolution[0], 0.0, aligned_left, 0.0, -resolution[1], aligned_top
+        )
         LOG.info(
             "Rendering shared %s grid at %.3f x %.3f units/pixel (%.2f x native)",
             target_crs,
@@ -298,31 +313,29 @@ def make_aligned_overlays(
             scale,
         )
 
-        output_shape: tuple[int, int] | None = None
-        output_transform = None
-        for label, sources, destination in (
-            ("pre-event", pre_sources, pre_destination),
-            ("post-event", post_sources, post_destination),
-        ):
-            mosaic, mosaic_transform = merge(
-                sources,
-                bounds=common_bounds,
-                indexes=[1, 2, 3],
-                res=resolution,
-                nodata=0,
-                method="first",
-                target_aligned_pixels=True,
-            )
-            height, width = mosaic.shape[1:]
-            if output_shape is None:
-                output_shape = (height, width)
-                output_transform = mosaic_transform
-            elif output_shape != (height, width):
-                raise RuntimeError("Aligned pre/post output dimensions unexpectedly differ")
-            alpha = np.where(np.any(mosaic != 0, axis=0), 255, 0).astype(np.uint8)
-            rgba = np.dstack((np.moveaxis(mosaic.astype(np.uint8), 0, -1), alpha))
-            Image.fromarray(rgba, mode="RGBA").save(destination, optimize=True)
-            LOG.info("Wrote aligned %s overlay %s (%dx%d)", label, destination, width, height)
+        if render_images:
+            for label, sources, destination in (
+                ("pre-event", pre_sources, pre_destination),
+                ("post-event", post_sources, post_destination),
+            ):
+                mosaic, mosaic_transform = merge(
+                    sources,
+                    bounds=common_bounds,
+                    indexes=[1, 2, 3],
+                    res=resolution,
+                    nodata=0,
+                    method="first",
+                    target_aligned_pixels=True,
+                )
+                height, width = mosaic.shape[1:]
+                if (height, width) != (output_height, output_width) or not mosaic_transform.almost_equals(
+                    output_transform
+                ):
+                    raise RuntimeError("Rendered grid differs from the planned aligned grid")
+                alpha = np.where(np.any(mosaic != 0, axis=0), 255, 0).astype(np.uint8)
+                rgba = np.dstack((np.moveaxis(mosaic.astype(np.uint8), 0, -1), alpha))
+                Image.fromarray(rgba, mode="RGBA").save(destination, optimize=True)
+                LOG.info("Wrote aligned %s overlay %s (%dx%d)", label, destination, width, height)
     finally:
         for dataset in warped_datasets:
             dataset.close()
@@ -330,12 +343,11 @@ def make_aligned_overlays(
             dataset.close()
 
     normalized = [[0.0, 0.0], [1.0, 1.0]]
-    assert output_shape is not None and output_transform is not None
     grid = {
         "crs": target_crs,
         "transform": output_transform,
-        "height": output_shape[0],
-        "width": output_shape[1],
+        "height": output_height,
+        "width": output_width,
     }
     return normalized, normalized, grid
 
@@ -427,8 +439,37 @@ def write_post_annotations(
     transform = grid["transform"]
     width, height = grid["width"], grid["height"]
     flood = gpd.read_file(flood_polygon_path).to_crs(target_crs)
-    width_lines = gpd.read_file(glacier_lines_path, layer="width").to_crs(target_crs)
-    length_lines = gpd.read_file(glacier_lines_path, layer="length")
+    available_layers = gpd.list_layers(glacier_lines_path)["name"].tolist()
+    if "width" in available_layers and "length" in available_layers:
+        width_lines = gpd.read_file(glacier_lines_path, layer="width")
+        length_lines = gpd.read_file(glacier_lines_path, layer="length")
+    else:
+        glacier = gpd.read_file(glacier_lines_path)
+        category_column = next(
+            (
+                column
+                for column in glacier.columns
+                if column != glacier.geometry.name
+                and {"width", "length"}.issubset(
+                    set(glacier[column].dropna().astype(str).str.strip().str.casefold())
+                )
+            ),
+            None,
+        )
+        if category_column is None:
+            raise ValueError(
+                "Glacier GeoPackage must have width/length layers or a field containing "
+                f"width and length values. Available layers: {available_layers}"
+            )
+        categories = glacier[category_column].fillna("").astype(str).str.strip().str.casefold()
+        width_lines = glacier[categories == "width"].copy()
+        length_lines = glacier[categories == "length"].copy()
+        LOG.info(
+            "Using glacier layer %s and category field %s for width/length features",
+            available_layers[0],
+            category_column,
+        )
+    width_lines = width_lines.to_crs(target_crs)
     if flood.empty or width_lines.empty or length_lines.empty:
         raise ValueError("Flood polygon, width layer, and length layer must each contain features")
 
@@ -624,12 +665,24 @@ def main() -> None:
     post_paths = discover(args.post_input)
     args.output.mkdir(parents=True, exist_ok=True)
     LOG.info("Found %d pre-event and %d post-event scenes", len(pre_paths), len(post_paths))
+    if args.annotations_only:
+        missing_overlays = [
+            path
+            for path in (args.output / "pre_event.png", args.output / "post_event.png")
+            if not path.is_file()
+        ]
+        if missing_overlays:
+            raise FileNotFoundError(
+                "--annotations-only requires existing overlays: "
+                + ", ".join(str(path) for path in missing_overlays)
+            )
     pre_bounds, post_bounds, grid = make_aligned_overlays(
         pre_paths,
         post_paths,
         args.output / "pre_event.png",
         args.output / "post_event.png",
         args.max_dimension,
+        render_images=not args.annotations_only,
     )
     annotation_path = args.output / "post_annotations.svg"
     measurements_path = args.output / "post_annotation_measurements.json"
