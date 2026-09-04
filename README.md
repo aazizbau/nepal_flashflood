@@ -143,6 +143,21 @@ the source CRS and finest native resolution, and processes the mosaic in
 memory-limited chunks. Use `--help` for custom dates, paths, overlap rules, and
 memory limits.
 
+## Slider map with line measurements
+
+Create a separate before/after slider containing the glacier `width` and
+`length` line measurements:
+
+```powershell
+python scripts/create_planet_slider_map_lengths.py
+start outputs\maps\planet_before_after_lengths\index.html
+```
+
+The width is a direct projected length. The glacier length is a
+terrain-following 3D length calculated from AW3D30 samples. This workflow writes
+`measurements.svg` and `measurements.json` alongside a separate HTML map and
+does not change the imagery-only `planet_before_after` map.
+
 ## ALOS World 3D (AW3D30) DSM mosaic
 
 Preview and then download a single clipped AW3D30 v4.1 DSM GeoTIFF for the

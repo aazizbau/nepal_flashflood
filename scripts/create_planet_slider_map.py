@@ -200,7 +200,7 @@ def make_aligned_overlays(
     pre_destination: Path,
     post_destination: Path,
     max_dimension: int,
-) -> tuple[list[list[float]], list[list[float]]]:
+) -> tuple[list[list[float]], list[list[float]], dict]:
     """Render both dates on the same north-up projected pixel grid."""
     if max_dimension < 256:
         raise ValueError("--max-dimension must be at least 256")
@@ -312,7 +312,13 @@ def make_aligned_overlays(
             dataset.close()
 
     normalized = [[0.0, 0.0], [1.0, 1.0]]
-    return normalized, normalized
+    grid = {
+        "crs": target_crs,
+        "transform": output_transform,
+        "height": output_height,
+        "width": output_width,
+    }
+    return normalized, normalized, grid
 
 
 def write_html(
@@ -437,7 +443,7 @@ def main() -> None:
     post_paths = discover(args.post_input)
     args.output.mkdir(parents=True, exist_ok=True)
     LOG.info("Found %d pre-event and %d post-event scenes", len(pre_paths), len(post_paths))
-    pre_bounds, post_bounds = make_aligned_overlays(
+    pre_bounds, post_bounds, _grid = make_aligned_overlays(
         pre_paths,
         post_paths,
         args.output / "pre_event.png",
