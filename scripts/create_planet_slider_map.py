@@ -228,7 +228,7 @@ def make_aligned_overlays(
                 warped = WarpedVRT(
                     dataset,
                     crs=target_crs,
-                    resampling=Resampling.bilinear,
+                    resampling=Resampling.lanczos,
                     nodata=0,
                 )
                 warped_datasets.append(warped)

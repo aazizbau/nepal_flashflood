@@ -156,7 +156,9 @@ start outputs\maps\planet_before_after_lengths\index.html
 The width is a direct projected length. The glacier length is a
 terrain-following 3D length calculated from AW3D30 samples. This workflow writes
 `measurements.svg` and `measurements.json` alongside a separate HTML map and
-does not change the imagery-only `planet_before_after` map.
+does not change the imagery-only `planet_before_after` map. Its 16000-pixel
+default and Lanczos reprojection preserve additional post-event image detail;
+measurement lines use contrasting halos and enlarged labels for visibility.
 
 ## ALOS World 3D (AW3D30) DSM mosaic
 

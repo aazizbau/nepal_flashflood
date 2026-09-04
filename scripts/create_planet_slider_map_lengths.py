@@ -59,7 +59,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output", type=Path, default=Path("outputs/maps/planet_before_after_lengths")
     )
-    parser.add_argument("--max-dimension", type=int, default=12000)
+    parser.add_argument(
+        "--max-dimension",
+        type=int,
+        default=16000,
+        help="Maximum display raster dimension; higher values preserve more PlanetScope detail.",
+    )
     parser.add_argument("--title", default="Nepal-Tibet Flash Flood 26 August 2026")
     parser.add_argument("--pre-label", default="Pre-event")
     parser.add_argument("--post-label", default="Post-event · 28 August 2026")
@@ -142,7 +147,11 @@ def write_measurements(lines_path: Path, dsm_path: Path, grid: dict, output: Pat
     length_projected = length_frame.to_crs(target_crs)
     map_unit = CRS.from_user_input(target_crs).axis_info[0].unit_conversion_factor
     records = {"width": [], "slope_length": []}
-    font_size = max(24, round(max(grid["width"], grid["height"]) / 230))
+    display_dimension = max(grid["width"], grid["height"])
+    font_size = max(160, round(display_dimension / 65))
+    line_width = max(14, round(display_dimension / 800))
+    halo_width = line_width + max(12, round(display_dimension / 900))
+    text_halo = max(12, round(font_size / 12))
     svg = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {grid["width"]} {grid["height"]}" preserveAspectRatio="xMidYMid meet">'
     ]
@@ -153,7 +162,7 @@ def write_measurements(lines_path: Path, dsm_path: Path, grid: dict, output: Pat
             ("width", width_projected, width_frame, "#00ffff"),
             ("length", length_projected, length_frame, "#ff8c00"),
         ):
-            svg.append(f'<g fill="none" stroke="{color}" stroke-width="3" vector-effect="non-scaling-stroke">')
+            svg.append(f'<g fill="none" stroke="{color}" stroke-width="{line_width}">')
             for index, geometry in projected_frame.geometry.items():
                 if geometry is None or geometry.is_empty:
                     continue
@@ -165,9 +174,14 @@ def write_measurements(lines_path: Path, dsm_path: Path, grid: dict, output: Pat
                 label = f'{"Width" if kind == "width" else "Slope length"}: {measured:,.1f} m'
                 midpoint = geometry.interpolate(0.5, normalized=True)
                 x, y = (~transform) * (midpoint.x, midpoint.y)
-                svg.append(f'<path d="{svg_path(geometry, transform)}"/>')
+                path = svg_path(geometry, transform)
                 svg.append(
-                    f'<text x="{x:.2f}" y="{y:.2f}" fill="{color}" stroke="#000" stroke-width="4" '
+                    f'<path d="{path}" stroke="#000" stroke-width="{halo_width}" opacity="0.8"/>'
+                )
+                svg.append(f'<path d="{path}"/>')
+                svg.append(
+                    f'<text x="{x:.2f}" y="{y:.2f}" dy="-{font_size * 0.35:.1f}" fill="{color}" '
+                    f'stroke="#000" stroke-width="{text_halo}" '
                     f'paint-order="stroke" font-family="Arial,sans-serif" font-size="{font_size}" '
                     f'font-weight="700" text-anchor="middle">{label}</text>'
                 )
