@@ -159,6 +159,8 @@ terrain-following 3D length calculated from AW3D30 samples. This workflow writes
 does not change the imagery-only `planet_before_after` map. Its 16000-pixel
 default and Lanczos reprojection preserve additional post-event image detail;
 measurement lines use contrasting halos and enlarged labels for visibility.
+The measured map opens at the complete imagery extent. Use **Lines** for a
+moderate 2× focus on the measurements or **1:1** to return to the overview.
 
 ## ALOS World 3D (AW3D30) DSM mosaic
 

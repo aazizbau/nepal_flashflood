@@ -303,7 +303,8 @@ def make_aligned_overlays(
                 raise RuntimeError("Rendered grid differs from the planned aligned grid")
             alpha = np.where(np.any(mosaic != 0, axis=0), 255, 0).astype(np.uint8)
             rgba = np.dstack((np.moveaxis(mosaic.astype(np.uint8), 0, -1), alpha))
-            Image.fromarray(rgba, mode="RGBA").save(destination, optimize=True)
+            LOG.info("Encoding %s PNG; this can take several minutes for large overlays", label)
+            Image.fromarray(rgba, mode="RGBA").save(destination, optimize=False, compress_level=2)
             LOG.info("Wrote aligned %s overlay %s (%dx%d)", label, destination, width, height)
     finally:
         for dataset in warped_datasets:

@@ -138,7 +138,9 @@ def svg_path(geometry, transform) -> str:
     return " ".join(commands)
 
 
-def write_measurements(lines_path: Path, dsm_path: Path, grid: dict, output: Path) -> None:
+def write_measurements(
+    lines_path: Path, dsm_path: Path, grid: dict, output: Path
+) -> tuple[float, float]:
     width_frame, length_frame = load_measurement_lines(lines_path)
     if width_frame.empty or length_frame.empty:
         raise ValueError("Both width and length features are required")
@@ -155,6 +157,7 @@ def write_measurements(lines_path: Path, dsm_path: Path, grid: dict, output: Pat
     svg = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {grid["width"]} {grid["height"]}" preserveAspectRatio="xMidYMid meet">'
     ]
+    label_positions: list[tuple[float, float]] = []
     with rasterio.open(dsm_path) as dsm:
         if dsm.crs is None:
             raise ValueError(f"DSM has no CRS: {dsm_path}")
@@ -174,6 +177,7 @@ def write_measurements(lines_path: Path, dsm_path: Path, grid: dict, output: Pat
                 label = f'{"Width" if kind == "width" else "Slope length"}: {measured:,.1f} m'
                 midpoint = geometry.interpolate(0.5, normalized=True)
                 x, y = (~transform) * (midpoint.x, midpoint.y)
+                label_positions.append((float(x), float(y)))
                 path = svg_path(geometry, transform)
                 svg.append(
                     f'<path d="{path}" stroke="#000" stroke-width="{halo_width}" opacity="0.8"/>'
@@ -201,6 +205,11 @@ def write_measurements(lines_path: Path, dsm_path: Path, grid: dict, output: Pat
         }
     )
     (output / "measurements.json").write_text(json.dumps(records, indent=2), encoding="utf-8")
+    if not label_positions:
+        raise ValueError("No valid measurement lines were rendered")
+    center_x = sum(position[0] for position in label_positions) / len(label_positions)
+    center_y = sum(position[1] for position in label_positions) / len(label_positions)
+    return center_x / grid["width"], center_y / grid["height"]
 
 
 def main() -> None:
@@ -217,7 +226,7 @@ def main() -> None:
         args.output / "post_event.png",
         args.max_dimension,
     )
-    write_measurements(args.lines, args.dsm, grid, args.output)
+    focus_x, focus_y = write_measurements(args.lines, args.dsm, grid, args.output)
     base.write_html(
         args.output / "index.html",
         args.title,
@@ -232,6 +241,21 @@ def main() -> None:
     if marker not in document:
         raise RuntimeError("Could not find post-event insertion point in generated HTML")
     document = document.replace(marker, marker + "\naddRaster('post-layer','measurements.svg',cfg.postBounds);")
+    document = document.replace(
+        '<button id="reset" title="Reset view">1:1</button>',
+        '<button id="focus-lines" title="Focus measurement lines" style="font-size:11px">Lines</button>'
+        '<button id="reset" title="Full overview">1:1</button>',
+    )
+    focus_script = f"""
+function focusMeasurements(){{
+  scale=2;
+  tx=viewer.clientWidth*0.72-({focus_x:.10f}*viewer.clientWidth*scale);
+  ty=viewer.clientHeight/2-({focus_y:.10f}*viewer.clientHeight*scale);
+  render();
+}}
+document.getElementById('focus-lines').onclick=focusMeasurements;
+"""
+    document = document.replace("</script></body></html>", focus_script + "</script></body></html>")
     html_path.write_text(document, encoding="utf-8")
     LOG.info("Measured slider map ready: %s", html_path.resolve())
 
